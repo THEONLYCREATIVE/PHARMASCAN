@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#050a14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>PharmaScan Pro</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ══════════ SPLASH ══════════ -->
+<div id="splash">
+  <div class="sp-bg"></div>
+  <div class="sp-content">
+    <div class="sp-cross">+</div>
+    <div class="sp-brand">PHARMA<span>SCAN</span></div>
+    <div class="sp-sub">ALSHAYA EXPIRY MANAGEMENT · PRO · v4 OFFLINE GS1</div>
+    <div class="sp-loader"><div class="sp-fill"></div></div>
+  </div>
+</div>
+
+<!-- ══════════ APP ══════════ -->
+<div id="app" class="app-hidden">
+
+  <header class="topbar">
+    <div class="tb-brand"><span class="tb-plus">+</span>PharmaScan</div>
+    <div class="tb-counters">
+      <div class="tb-counter danger"><span id="cnExpired">0</span><em>EXP</em></div>
+      <div class="tb-counter warn"><span id="cnExpiring">0</span><em>SOON</em></div>
+      <div class="tb-counter good"><span id="cnOk">0</span><em>OK</em></div>
+    </div>
+  </header>
+
+  <main class="main-area">
+
+    <!-- ▸ SCAN -->
+    <section class="pg active" id="pg-scan">
+      <div class="scan-card">
+        <div class="scan-card-label"><span class="sc-dot"></span>READY TO SCAN</div>
+        <div class="scan-row">
+          <input id="barcodeInput" class="barcode-input" type="text"
+            placeholder="Scan or paste barcode (EAN / GS1 / DataWedge)…"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+          <button id="btnCam" class="cam-btn" title="Camera">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </button>
+        </div>
+        <div id="cam-reader" class="cam-reader hidden"></div>
+        <div class="scan-hints">
+          <span>↵ Enter or paste</span><span>·</span>
+          <span>GS1-128 / EAN-13 / UPC / DataMatrix</span><span>·</span>
+          <span>DataWedge OK</span>
+        </div>
+      </div>
+
+      <!-- CONFIRM PANEL -->
+      <div id="confirmPanel" class="confirm-panel hidden">
+        <div class="cp-head">
+          <div>
+            <div class="cp-ribbon" id="cpRibbon">MATCHED</div>
+            <div class="cp-name" id="cpName">—</div>
+            <div class="cp-submeta">
+              <span class="meta-chip rms"   id="cpRms"></span>
+              <span class="meta-chip brand" id="cpBrand"></span>
+              <span class="meta-chip supp"  id="cpSupplier"></span>
+            </div>
+            <div class="cp-codes">
+              <span id="cpGtin"></span>
+              <span id="cpAlshaya"></span>
+              <span id="cpNewAlshaya"></span>
+            </div>
+            <!-- GS1 decoded AIs row -->
+            <div id="cpAiRow" class="cp-ai-row hidden"></div>
+          </div>
+          <button class="cp-x" id="cpDismiss">✕</button>
+        </div>
+
+        <div class="expiry-src" id="expirySrc"></div>
+
+        <!-- EXPIRY + BATCH + QTY -->
+        <div class="cp-fields">
+          <div class="cp-field span2">
+            <label class="cp-lbl">EXPIRY DATE <span class="req">*</span></label>
+            <input type="date" id="cpExpiry" class="cp-inp cp-date">
+          </div>
+          <div class="cp-field">
+            <label class="cp-lbl">BATCH NO</label>
+            <input type="text" id="cpBatch" class="cp-inp" placeholder="optional">
+          </div>
+          <div class="cp-field">
+            <label class="cp-lbl">QTY</label>
+            <input type="number" id="cpQty" class="cp-inp" value="1" min="1">
+          </div>
+        </div>
+
+        <!-- OCR — only when no expiry -->
+        <div id="ocrSection" class="ocr-section hidden">
+          <div class="ocr-rule">── scan label for expiry date ──</div>
+          <button id="btnOcrToggle" class="ocr-toggle">📷 OCR: Scan Expiry from Label</button>
+          <div id="ocrBox" class="ocr-box hidden">
+            <label class="ocr-lbl">
+              <input type="file" id="ocrFile" accept="image/*" capture="environment">
+              <span>📷 Take Photo or Upload</span>
+            </label>
+            <div id="ocrStatus" class="ocr-status"></div>
+          </div>
+        </div>
+
+        <div class="cp-actions">
+          <button id="btnSave" class="btn-confirm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            CONFIRM &amp; SAVE
+          </button>
+          <button id="btnSkip" class="btn-skip">Skip</button>
+        </div>
+      </div>
+
+      <div class="section-row">
+        <span class="sec-title">RECENT SCANS</span>
+        <button class="sec-link" onclick="showPage('pg-history')">All →</button>
+      </div>
+      <div id="recentList" class="card-list"></div>
+    </section>
+
+    <!-- ▸ HISTORY -->
+    <section class="pg" id="pg-history">
+      <div class="htoolbar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="s-ico"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="searchInput" class="search-inp" placeholder="Name, GTIN, RMS, Alshaya code, batch…">
+        </div>
+        <div class="filter-pills">
+          <button class="fpill active" data-f="all">All</button>
+          <button class="fpill" data-f="expired">Expired</button>
+          <button class="fpill" data-f="expiring">Soon</button>
+          <button class="fpill" data-f="ok">OK</button>
+          <button class="fpill" data-f="noexp">No Expiry</button>
+        </div>
+      </div>
+      <div id="historyList" class="card-list"></div>
+    </section>
+
+    <!-- ▸ MASTER -->
+    <section class="pg" id="pg-master">
+      <div class="master-hero">
+        <div class="mh-n" id="masterCount">0</div>
+        <div class="mh-lbl">Products in Master Database</div>
+      </div>
+
+      <div class="info-box">
+        <div class="ib-title">📋 Expected Master CSV / TSV Columns</div>
+        <div class="col-grid">
+          <div class="col-chip req">BARCODE</div>
+          <div class="col-chip req">DESCRIPTION</div>
+          <div class="col-chip">RMS ID</div>
+          <div class="col-chip">ALSHAYA CODE</div>
+          <div class="col-chip">NEW ALSHAYA CODE</div>
+          <div class="col-chip">BRAND</div>
+          <div class="col-chip">SUPPLIER</div>
+          <div class="col-chip">EXPIRY DATE</div>
+          <div class="col-chip">BATCH NO</div>
+        </div>
+        <div class="ib-note">Expiry accepts: DD/MM/YYYY · MM/YYYY · Excel serial · YYMMDD · YYYY-MM-DD</div>
+        <div class="ib-note">Delimiter: tab or comma auto-detected · Built-in database auto-seeds on first launch</div>
+      </div>
+
+      <div class="action-card">
+        <div class="ac-ttl">📥 Upload / Replace Master</div>
+        <p class="ac-desc">Replaces entire database with new file</p>
+        <button class="btn-primary" onclick="document.getElementById('fileMasterReplace').click()">Choose File (TSV / CSV)</button>
+        <input type="file" id="fileMasterReplace" accept=".csv,.txt,.tsv" hidden>
+      </div>
+      <div class="action-card">
+        <div class="ac-ttl">➕ Append to Master</div>
+        <button class="btn-secondary" onclick="document.getElementById('fileMasterAppend').click()">Choose File (TSV / CSV)</button>
+        <input type="file" id="fileMasterAppend" accept=".csv,.txt,.tsv" hidden>
+      </div>
+      <div class="action-card">
+        <div class="ac-ttl">📄 Download Template / Embedded DB</div>
+        <div class="tpl-box"><code>BARCODE&#9;RMS ID&#9;ALSHAYA CODE&#9;NEW ALSHAYA CODE&#9;DESCRIPTION&#9;BRAND&#9;SUPPLIER&#9;EXPIRY DATE&#9;BATCH NO
+4015630982110&#9;220216906&#9;Y3BOY358100197A&#9;BZBTSLOACC82110&#9;ACCUCHECK PERFORMA 50S&#9;ACCUCHECK&#9;PHARMATRADE&#9;30/06/2026&#9;LOT-A1</code></div>
+        <button class="btn-outline" onclick="downloadTemplate()">Download TSV Template</button>
+        <button class="btn-outline" style="margin-top:.4rem" onclick="downloadEmbeddedDB()">⬇ Export Embedded DB String</button>
+      </div>
+      <div class="action-card danger-card">
+        <div class="ac-ttl">⚠ Reset</div>
+        <button class="btn-danger" onclick="resetMaster()">Clear All Master Data</button>
+      </div>
+    </section>
+
+    <!-- ▸ EXPORT -->
+    <section class="pg" id="pg-export">
+      <div class="export-preview">
+        <div class="ep-title">Export Format Preview</div>
+        <div class="ep-cols">
+          <div class="ep-col">Scan Barcode</div>
+          <div class="ep-col">RMS</div>
+          <div class="ep-col">Alshaya Code</div>
+          <div class="ep-col">Description</div>
+          <div class="ep-col">Brand</div>
+          <div class="ep-col">Supplier</div>
+          <div class="ep-col accent">QTY</div>
+          <div class="ep-col accent">Expiry Date</div>
+          <div class="ep-col accent">Batch No</div>
+        </div>
+      </div>
+
+      <div class="action-card">
+        <div class="ac-ttl">📊 Export All Items</div>
+        <p class="ac-desc">Full export matching your Alshaya format</p>
+        <button class="btn-primary" onclick="exportCSV('all')">Export All (CSV)</button>
+      </div>
+      <div class="action-card">
+        <div class="ac-ttl">⚠ Export Expired / Expiring Soon</div>
+        <p class="ac-desc">Filtered to items needing action</p>
+        <button class="btn-secondary" onclick="exportCSV('expired')">Export Expired &amp; Soon</button>
+      </div>
+      <div class="action-card">
+        <div class="ac-ttl">📋 Export No-Expiry Items</div>
+        <p class="ac-desc">Items scanned without expiry date</p>
+        <button class="btn-secondary" onclick="exportCSV('noexp')">Export No-Expiry</button>
+      </div>
+      <div class="action-card">
+        <div class="ac-ttl">💾 Backup &amp; Restore</div>
+        <div class="btn-duo">
+          <button class="btn-secondary" onclick="downloadBackup()">Backup JSON</button>
+          <button class="btn-secondary" onclick="document.getElementById('fileRestore').click()">Restore</button>
+        </div>
+        <input type="file" id="fileRestore" accept=".json" hidden>
+      </div>
+      <div class="action-card danger-card">
+        <div class="ac-ttl">🗑 Clear History</div>
+        <button class="btn-danger" onclick="clearHistory()">Delete All Scanned Items</button>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="bnav">
+    <button class="bnav-item active" data-page="pg-scan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="6" height="6"/><rect x="2" y="15" width="6" height="6"/><rect x="16" y="3" width="6" height="6"/><line x1="16" y1="15" x2="22" y2="15"/><line x1="19" y1="15" x2="19" y2="21"/><line x1="22" y1="21" x2="16" y2="21"/></svg>
+      <span>Scan</span>
+    </button>
+    <button class="bnav-item" data-page="pg-history">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span>History</span>
+    </button>
+    <button class="bnav-item" data-page="pg-master">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      <span>Master</span>
+    </button>
+    <button class="bnav-item" data-page="pg-export">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Export</span>
+    </button>
+  </nav>
+</div>
+
+<!-- EDIT MODAL -->
+<div id="editModal" class="modal-bg hidden">
+  <div class="modal">
+    <div class="modal-hdr"><span>Edit Item</span><button onclick="closeEditModal()">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="eId">
+      <div class="mf"><label>Description</label><input id="eName" class="mf-inp"></div>
+      <div class="mf"><label>Scan Barcode (GTIN)</label><input id="eGtin" class="mf-inp" readonly></div>
+      <div class="mf"><label>Expiry Date</label><input type="date" id="eExpiry" class="mf-inp"></div>
+      <div class="mf"><label>Batch No</label><input id="eBatch" class="mf-inp"></div>
+      <div class="mf2">
+        <div class="mf"><label>QTY</label><input type="number" id="eQty" class="mf-inp" min="1"></div>
+        <div class="mf"><label>RMS ID</label><input id="eRms" class="mf-inp"></div>
+      </div>
+      <div class="mf2">
+        <div class="mf"><label>Alshaya Code</label><input id="eAlshaya" class="mf-inp"></div>
+        <div class="mf"><label>New Alshaya Code</label><input id="eNewAlshaya" class="mf-inp"></div>
+      </div>
+      <div class="mf"><label>Brand</label><input id="eBrand" class="mf-inp"></div>
+      <div class="mf"><label>Supplier</label><input id="eSupplierEdit" class="mf-inp"></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" class="toast-wrap"></div>
+<div id="loadingOverlay" class="loading-overlay hidden">
+  <div class="loading-ring"></div>
+  <div id="loadingMsg">Loading…</div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://unpkg.com/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
