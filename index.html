@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#050a14">
+  <meta name="theme-color" content="#eef4ff">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>PharmaScan Pro</title>
@@ -86,8 +86,21 @@
         <!-- EXPIRY + BATCH + QTY -->
         <div class="cp-fields">
           <div class="cp-field span2">
+            <label class="cp-lbl">PRODUCT NAME <span class="req">*</span></label>
+            <input type="text" id="cpNameInput" class="cp-inp cp-big" placeholder="Enter product name for new item">
+          </div>
+          <div class="cp-field span2">
             <label class="cp-lbl">EXPIRY DATE <span class="req">*</span></label>
-            <input type="date" id="cpExpiry" class="cp-inp cp-date">
+            <input type="date" id="cpExpiry" class="cp-inp cp-date hidden">
+            <button type="button" id="btnExpiryPicker" class="cp-inp cp-expiry-trigger">Press Expiry to Add (MM/YY)</button>
+            <div id="expiryPicker" class="expiry-picker hidden">
+              <select id="cpExpMonth" class="cp-inp">
+                <option value="">Month (01-12)</option>
+              </select>
+              <select id="cpExpYear" class="cp-inp">
+                <option value="">Year</option>
+              </select>
+            </div>
           </div>
           <div class="cp-field">
             <label class="cp-lbl">BATCH NO</label>
@@ -113,6 +126,10 @@
         </div>
 
         <div class="cp-actions">
+          <label class="cp-save-master">
+            <input type="checkbox" id="cpAddToMaster">
+            Save as new product in master
+          </label>
           <button id="btnSave" class="btn-confirm">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             CONFIRM &amp; SAVE
