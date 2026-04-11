@@ -1,7 +1,7 @@
 {
-  "name": "PharmaScan Pro",
-  "short_name": "PharmaScan",
-  "description": "Alshaya Pharmacy Expiry Management — Offline GS1 Barcode Parsing Edition",
+  "name": "Pharmacy Scan",
+  "short_name": "Pharmacy",
+  "description": "Pharmacy expiry manager with offline GS1 parsing",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
