@@ -98,8 +98,12 @@ const S = {
   draft: null,
   camActive: false,
   camInst: null,
-  ocrWorker: null
+  ocrWorker: null,
+  namePool: [],
+  supplierPool: []
 };
+
+const EXPIRY_YEARS_FORWARD = 10;
 
 // ═══════════════════════════════════════════════════
 // INDEXEDDB LAYER
@@ -554,7 +558,7 @@ async function handleBarcode(raw) {
     brand:          prod?.brand          || '',
     supplierName:   prod?.supplierName   || '',
     expiryISO,
-    expiryDisplay:  expiryISO ? isoDisplay(expiryISO) : '',
+    expiryDisplay:  expiryISO ? isoMonthYearDisplay(expiryISO) : '',
     expirySrc,
     batch:          parsed.batch  || prod?.batch  || '',
     serial:         parsed.serial || '',
@@ -580,6 +584,7 @@ function showPanel() {
   }
 
   document.getElementById('cpName').textContent      = d.name;
+  document.getElementById('cpNameInput').value       = d.name || '';
   document.getElementById('cpRms').textContent       = d.rmsId       ? `RMS: ${d.rmsId}`       : '';
   document.getElementById('cpBrand').textContent     = d.brand       ? d.brand                  : '';
   document.getElementById('cpSupplier').textContent  = d.supplierName ? d.supplierName          : '';
@@ -600,8 +605,11 @@ function showPanel() {
   else                           { src.textContent = '⚠ No expiry — enter or scan label';       src.className = 'expiry-src es-manual'; }
 
   document.getElementById('cpExpiry').value = d.expiryISO || '';
+  syncExpiryPickerFromISO(d.expiryISO);
   document.getElementById('cpBatch').value  = d.batch || '';
+  document.getElementById('cpSupplierInput').value = d.supplierName || '';
   document.getElementById('cpQty').value    = 1;
+  document.getElementById('cpAddToMaster').checked = d.matchHow !== 'MATCHED';
 
   const needOCR = !d.expiryISO;
   document.getElementById('ocrSection').classList.toggle('hidden', !needOCR);
@@ -616,11 +624,31 @@ function showPanel() {
 async function saveItem() {
   const d = S.draft; if (!d) return;
   const iso = document.getElementById('cpExpiry').value;
+  const nameInput = document.getElementById('cpNameInput').value.trim().toUpperCase();
+  if (!nameInput) { toast('Please enter product name', 'warn'); return; }
+  d.name          = nameInput;
   d.expiryISO     = iso;
-  d.expiryDisplay = iso ? isoDisplay(iso) : '';
-  d.batch         = document.getElementById('cpBatch').value.trim();
+  d.expiryDisplay = iso ? isoMonthYearDisplay(iso) : '';
+  d.batch         = document.getElementById('cpBatch').value.trim().toUpperCase();
+  d.supplierName  = document.getElementById('cpSupplierInput').value.trim().toUpperCase();
   d.qty           = parseInt(document.getElementById('cpQty').value) || 1;
   await DB.add('history', d);
+
+  if (document.getElementById('cpAddToMaster').checked) {
+    await DB.put('master', {
+      barcode:        (d.gtin || '').padStart(14, '0'),
+      name:           d.name || '',
+      rmsId:          d.rmsId || '',
+      alshayaCode:    d.alshayaCode || '',
+      newAlshayaCode: d.newAlshayaCode || '',
+      brand:          d.brand || '',
+      supplierName:   d.supplierName || '',
+      expiryISO:      d.expiryISO || '',
+      batch:          d.batch || ''
+    });
+    await refreshMasterCount();
+  }
+
   dismissPanel();
   await refreshAll();
   toast(`Saved: ${d.name}`, 'ok');
@@ -714,7 +742,7 @@ async function exportCSV(filter = 'all') {
   if (!hist.length) { toast('No data to export', 'warn'); return; }
 
   const SEP = '\t';
-  const hdr = ['Scan Barcode','RMS','Alshaya Code / Part Number','Description','Brand','Supplier Name','QTY','Expiry Date','Batch No'];
+  const hdr = ['Scan Barcode','RMS','Item Code','Description','Brand','Supplier Name','QTY','Expiry Date','Batch No'];
   const rows = hist.map(h => [
     h.gtin           || '',
     h.rmsId          || '',
@@ -793,7 +821,7 @@ async function refreshHistory() {
   if (S.filter !== 'all') h = h.filter(i => GS1.status(i.expiryISO) === S.filter);
   if (S.search) {
     const q = S.search.toLowerCase();
-    h = h.filter(i => [i.name,i.gtin,i.rmsId,i.alshayaCode,i.newAlshayaCode,i.batch,i.brand,i.supplierName]
+    h = h.filter(i => [i.name,i.gtin,i.rmsId,i.batch,i.brand,i.supplierName]
       .some(v => (v||'').toLowerCase().includes(q)));
   }
   document.getElementById('historyList').innerHTML = h.length
@@ -805,6 +833,10 @@ async function refreshMasterCount() {
   const m = await DB.getAll('master');
   document.getElementById('masterCount').textContent = m.length;
   Master.build(m);
+  S.namePool = [...new Set(m.map(x => (x.name || '').trim()).filter(Boolean))];
+  S.supplierPool = [...new Set(m.map(x => (x.supplierName || '').trim()).filter(Boolean))];
+  updateDatalist('nameSuggestions', S.namePool);
+  updateDatalist('supplierSuggestions', S.supplierPool);
 }
 
 function card(h, actions = false) {
@@ -818,7 +850,7 @@ function card(h, actions = false) {
     <div class="ic-grid">
       <div class="ic-f"><span class="ic-fl">SCAN BARCODE</span><span class="ic-fv">${h.gtin||'—'}</span></div>
       <div class="ic-f"><span class="ic-fl">RMS</span><span class="ic-fv">${h.rmsId||'—'}</span></div>
-      <div class="ic-f"><span class="ic-fl">ALSHAYA CODE</span><span class="ic-fv">${h.newAlshayaCode||h.alshayaCode||'—'}</span></div>
+      <div class="ic-f"><span class="ic-fl">SUPPLIER</span><span class="ic-fv">${h.supplierName||'—'}</span></div>
       <div class="ic-f"><span class="ic-fl">BRAND</span><span class="ic-fv">${h.brand||'—'}</span></div>
       <div class="ic-f"><span class="ic-fl">BATCH NO</span><span class="ic-fv">${h.batch||'—'}</span></div>
       <div class="ic-f"><span class="ic-fl">QTY</span><span class="ic-fv">${h.qty||1}</span></div>
@@ -857,16 +889,16 @@ async function saveEdit() {
   const id = parseInt(document.getElementById('eId').value);
   const h  = await DB.get('history', id); if (!h) return;
   const iso = document.getElementById('eExpiry').value;
-  h.name           = document.getElementById('eName').value.trim();
+  h.name           = document.getElementById('eName').value.trim().toUpperCase();
   h.expiryISO      = iso;
-  h.expiryDisplay  = iso ? isoDisplay(iso) : '';
-  h.batch          = document.getElementById('eBatch').value.trim();
+  h.expiryDisplay  = iso ? isoMonthYearDisplay(iso) : '';
+  h.batch          = document.getElementById('eBatch').value.trim().toUpperCase();
   h.qty            = parseInt(document.getElementById('eQty').value) || 1;
-  h.rmsId          = document.getElementById('eRms').value.trim();
-  h.alshayaCode    = document.getElementById('eAlshaya').value.trim();
-  h.newAlshayaCode = document.getElementById('eNewAlshaya').value.trim();
-  h.brand          = document.getElementById('eBrand').value.trim();
-  h.supplierName   = document.getElementById('eSupplierEdit').value.trim();
+  h.rmsId          = document.getElementById('eRms').value.trim().toUpperCase();
+  h.alshayaCode    = document.getElementById('eAlshaya').value.trim().toUpperCase();
+  h.newAlshayaCode = document.getElementById('eNewAlshaya').value.trim().toUpperCase();
+  h.brand          = document.getElementById('eBrand').value.trim().toUpperCase();
+  h.supplierName   = document.getElementById('eSupplierEdit').value.trim().toUpperCase();
   await DB.put('history', h);
   closeEditModal();
   await refreshAll();
@@ -944,6 +976,32 @@ function isoDisplay(iso) {
   const d = new Date(iso + 'T00:00:00');
   return `${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()}`;
 }
+function isoMonthYearDisplay(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  return `${p2(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`;
+}
+function monthYearToISO(month, year) {
+  if (!month || !year) return '';
+  const y = Number(year), m = Number(month);
+  const last = new Date(y, m, 0).getDate();
+  return `${y}-${p2(m)}-${p2(last)}`;
+}
+function syncExpiryPickerFromISO(iso) {
+  const m = document.getElementById('cpExpMonth');
+  const y = document.getElementById('cpExpYear');
+  if (!m || !y) return;
+  if (!iso) {
+    m.value = '';
+    y.value = '';
+    document.getElementById('btnExpiryPicker').textContent = 'Press Expiry to Add (MM/YY)';
+    return;
+  }
+  const d = new Date(iso + 'T00:00:00');
+  m.value = String(d.getMonth() + 1);
+  y.value = String(d.getFullYear());
+  document.getElementById('btnExpiryPicker').textContent = `Expiry: ${p2(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`;
+}
 function dlFile(c, n, m) {
   const a = Object.assign(document.createElement('a'), {
     href: URL.createObjectURL(new Blob([c], { type: m })),
@@ -962,6 +1020,34 @@ function toast(msg, type = 'info') {
   document.getElementById('toasts').appendChild(el);
   setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(() => el.remove(), 300); }, 2800);
 }
+function updateDatalist(id, arr) {
+  const dl = document.getElementById(id);
+  if (!dl) return;
+  dl.innerHTML = arr.slice(0, 40).map(v => `<option value="${esc(v)}"></option>`).join('');
+}
+function upperInput(el) { el.value = (el.value || '').toUpperCase(); }
+async function generateSyncBundle() {
+  const [history, master] = await Promise.all([DB.getAll('history'), DB.getAll('master')]);
+  const payload = btoa(unescape(encodeURIComponent(JSON.stringify({ version: CFG.VER, history, master }))));
+  document.getElementById('syncBundle').value = payload;
+  toast('Sync code ready. Copy to other device.', 'ok');
+}
+async function importSyncBundle() {
+  try {
+    const txt = document.getElementById('syncBundle').value.trim();
+    if (!txt) return toast('Paste sync code first', 'warn');
+    const data = JSON.parse(decodeURIComponent(escape(atob(txt))));
+    if (!data.master || !data.history) return toast('Invalid sync code', 'err');
+    await DB.clear('master');
+    await DB.clear('history');
+    await DB.bulkMaster(data.master);
+    for (const it of data.history) { delete it.id; await DB.add('history', it); }
+    await refreshAll();
+    toast('Sync imported successfully', 'ok');
+  } catch {
+    toast('Invalid sync code', 'err');
+  }
+}
 function showLoad(m = 'Loading…') {
   document.getElementById('loadingMsg').textContent = m;
   document.getElementById('loadingOverlay').classList.remove('hidden');
@@ -975,14 +1061,45 @@ function setupEvents() {
   const bi = document.getElementById('barcodeInput');
   bi.addEventListener('keydown', async e => { if (e.key === 'Enter') { e.preventDefault(); await handleBarcode(bi.value); bi.value = ''; } });
   bi.addEventListener('paste', () => setTimeout(async () => { await handleBarcode(bi.value); bi.value = ''; }, 80));
+  bi.addEventListener('input', e => upperInput(e.target));
 
   document.getElementById('btnCam').addEventListener('click', toggleCam);
+  document.getElementById('btnTheme')?.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    localStorage.setItem('pharmacy_theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+  });
   document.getElementById('btnSave').addEventListener('click', saveItem);
   document.getElementById('btnSkip').addEventListener('click', dismissPanel);
   document.getElementById('cpDismiss').addEventListener('click', dismissPanel);
 
   document.getElementById('cpExpiry').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('cpBatch').focus(); } });
+  document.getElementById('btnExpiryPicker').addEventListener('click', () => {
+    document.getElementById('expiryPicker').classList.toggle('hidden');
+  });
+  const onExpiryPick = () => {
+    const month = document.getElementById('cpExpMonth').value;
+    const year = document.getElementById('cpExpYear').value;
+    const iso = monthYearToISO(month, year);
+    document.getElementById('cpExpiry').value = iso;
+    if (iso) {
+      document.getElementById('btnExpiryPicker').textContent = `Expiry: ${p2(Number(month))}/${String(year).slice(-2)}`;
+      document.getElementById('expiryPicker').classList.add('hidden');
+    }
+  };
+  document.getElementById('cpExpMonth').addEventListener('change', onExpiryPick);
+  document.getElementById('cpExpYear').addEventListener('change', onExpiryPick);
   document.getElementById('cpBatch').addEventListener('keydown',  e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btnSave').click(); } });
+  document.getElementById('cpBatch').addEventListener('input', e => upperInput(e.target));
+  document.getElementById('cpSupplierInput').addEventListener('input', e => upperInput(e.target));
+  document.getElementById('cpNameInput').addEventListener('input', e => {
+    upperInput(e.target);
+    const q = e.target.value.trim().toLowerCase();
+    if (!q) return;
+    const match = [...S.masterIdx.values()].find(x => (x.name || '').toLowerCase().startsWith(q));
+    if (match && !document.getElementById('cpSupplierInput').value) {
+      document.getElementById('cpSupplierInput').value = (match.supplierName || '').toUpperCase();
+    }
+  });
 
   document.getElementById('btnOcrToggle').addEventListener('click', () => document.getElementById('ocrBox').classList.toggle('hidden'));
   document.getElementById('ocrFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) runOCR(f); });
@@ -995,6 +1112,9 @@ function setupEvents() {
     refreshHistory();
   }));
   document.getElementById('searchInput').addEventListener('input', e => { S.search = e.target.value; refreshHistory(); });
+  ['eName','eBatch','eRms','eAlshaya','eNewAlshaya','eBrand','eSupplierEdit'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', e => upperInput(e.target));
+  });
 
   document.getElementById('fileMasterReplace').addEventListener('change', e => { if (e.target.files[0]) { uploadMaster(e.target.files[0], false); e.target.value = ''; } });
   document.getElementById('fileMasterAppend').addEventListener('change',  e => { if (e.target.files[0]) { uploadMaster(e.target.files[0], true);  e.target.value = ''; } });
@@ -1010,10 +1130,12 @@ function setupEvents() {
 async function init() {
   console.log(`🚀 PharmaScan Pro v${CFG.VER} — Offline GS1 Edition`);
   try {
+    if (localStorage.getItem('pharmacy_theme') === 'dark') document.body.classList.add('dark');
     await DB.init();
     await seedEmbeddedDatabase();   // ← loads EMBEDDED_MASTER_DB on first run
     await refreshMasterCount();
     await refreshAll();
+    buildExpiryInputs();
     setupEvents();
     setTimeout(() => {
       document.getElementById('splash').classList.add('out');
@@ -1025,6 +1147,26 @@ async function init() {
     console.error(e);
     document.getElementById('splash').classList.add('out');
     document.getElementById('app').classList.remove('app-hidden');
+  }
+}
+
+function buildExpiryInputs() {
+  const m = document.getElementById('cpExpMonth');
+  const y = document.getElementById('cpExpYear');
+  if (!m || !y) return;
+  for (let i = 1; i <= 12; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${p2(i)}`;
+    m.appendChild(opt);
+  }
+  const nowYear = new Date().getFullYear();
+  for (let i = 0; i < EXPIRY_YEARS_FORWARD; i++) {
+    const year = nowYear + i;
+    const opt = document.createElement('option');
+    opt.value = year;
+    opt.textContent = `${String(year).slice(-2)} (${year})`;
+    y.appendChild(opt);
   }
 }
 

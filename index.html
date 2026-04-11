@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#050a14">
+  <meta name="theme-color" content="#eef4ff">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>PharmaScan Pro</title>
+  <title>Pharmacy Scan</title>
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -19,8 +19,9 @@
   <div class="sp-bg"></div>
   <div class="sp-content">
     <div class="sp-cross">+</div>
-    <div class="sp-brand">PHARMA<span>SCAN</span></div>
-    <div class="sp-sub">ALSHAYA EXPIRY MANAGEMENT · PRO · v4 OFFLINE GS1</div>
+    <div class="sp-brand">PHARMACY<span>SCAN</span></div>
+    <div class="sp-sub">EXPIRY MANAGEMENT · OFFLINE GS1</div>
+    <div class="sp-signature" id="spSignature">Created by a Pharmacist Vysakh</div>
     <div class="sp-loader"><div class="sp-fill"></div></div>
   </div>
 </div>
@@ -29,7 +30,8 @@
 <div id="app" class="app-hidden">
 
   <header class="topbar">
-    <div class="tb-brand"><span class="tb-plus">+</span>PharmaScan</div>
+    <div class="tb-brand"><span class="tb-plus">+</span>Pharmacy</div>
+    <button id="btnTheme" class="theme-toggle" title="Toggle theme">◐</button>
     <div class="tb-counters">
       <div class="tb-counter danger"><span id="cnExpired">0</span><em>EXP</em></div>
       <div class="tb-counter warn"><span id="cnExpiring">0</span><em>SOON</em></div>
@@ -72,8 +74,8 @@
             </div>
             <div class="cp-codes">
               <span id="cpGtin"></span>
-              <span id="cpAlshaya"></span>
-              <span id="cpNewAlshaya"></span>
+              <span id="cpAlshaya" class="hidden"></span>
+              <span id="cpNewAlshaya" class="hidden"></span>
             </div>
             <!-- GS1 decoded AIs row -->
             <div id="cpAiRow" class="cp-ai-row hidden"></div>
@@ -86,12 +88,31 @@
         <!-- EXPIRY + BATCH + QTY -->
         <div class="cp-fields">
           <div class="cp-field span2">
+            <label class="cp-lbl">PRODUCT NAME <span class="req">*</span></label>
+            <input type="text" id="cpNameInput" class="cp-inp cp-big" placeholder="Enter product name for new item" list="nameSuggestions">
+            <datalist id="nameSuggestions"></datalist>
+          </div>
+          <div class="cp-field span2">
             <label class="cp-lbl">EXPIRY DATE <span class="req">*</span></label>
-            <input type="date" id="cpExpiry" class="cp-inp cp-date">
+            <input type="date" id="cpExpiry" class="cp-inp cp-date hidden">
+            <button type="button" id="btnExpiryPicker" class="cp-inp cp-expiry-trigger">Press Expiry to Add (MM/YY)</button>
+            <div id="expiryPicker" class="expiry-picker hidden">
+              <select id="cpExpMonth" class="cp-inp">
+                <option value="">Month (01-12)</option>
+              </select>
+              <select id="cpExpYear" class="cp-inp">
+                <option value="">Year</option>
+              </select>
+            </div>
           </div>
           <div class="cp-field">
             <label class="cp-lbl">BATCH NO</label>
             <input type="text" id="cpBatch" class="cp-inp" placeholder="optional">
+          </div>
+          <div class="cp-field">
+            <label class="cp-lbl">SUPPLIER</label>
+            <input type="text" id="cpSupplierInput" class="cp-inp" placeholder="optional" list="supplierSuggestions">
+            <datalist id="supplierSuggestions"></datalist>
           </div>
           <div class="cp-field">
             <label class="cp-lbl">QTY</label>
@@ -113,6 +134,10 @@
         </div>
 
         <div class="cp-actions">
+          <label class="cp-save-master">
+            <input type="checkbox" id="cpAddToMaster">
+            Save as new product in master
+          </label>
           <button id="btnSave" class="btn-confirm">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             CONFIRM &amp; SAVE
@@ -133,7 +158,7 @@
       <div class="htoolbar">
         <div class="search-wrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="s-ico"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input id="searchInput" class="search-inp" placeholder="Name, GTIN, RMS, Alshaya code, batch…">
+          <input id="searchInput" class="search-inp" placeholder="Name, GTIN, RMS, supplier, batch…">
         </div>
         <div class="filter-pills">
           <button class="fpill active" data-f="all">All</button>
@@ -159,8 +184,8 @@
           <div class="col-chip req">BARCODE</div>
           <div class="col-chip req">DESCRIPTION</div>
           <div class="col-chip">RMS ID</div>
-          <div class="col-chip">ALSHAYA CODE</div>
-          <div class="col-chip">NEW ALSHAYA CODE</div>
+          <div class="col-chip">ITEM CODE</div>
+          <div class="col-chip">ALT ITEM CODE</div>
           <div class="col-chip">BRAND</div>
           <div class="col-chip">SUPPLIER</div>
           <div class="col-chip">EXPIRY DATE</div>
@@ -201,7 +226,7 @@
         <div class="ep-cols">
           <div class="ep-col">Scan Barcode</div>
           <div class="ep-col">RMS</div>
-          <div class="ep-col">Alshaya Code</div>
+          <div class="ep-col">Item Code</div>
           <div class="ep-col">Description</div>
           <div class="ep-col">Brand</div>
           <div class="ep-col">Supplier</div>
@@ -213,7 +238,7 @@
 
       <div class="action-card">
         <div class="ac-ttl">📊 Export All Items</div>
-        <p class="ac-desc">Full export matching your Alshaya format</p>
+        <p class="ac-desc">Full export with pharmacy format</p>
         <button class="btn-primary" onclick="exportCSV('all')">Export All (CSV)</button>
       </div>
       <div class="action-card">
@@ -233,6 +258,13 @@
           <button class="btn-secondary" onclick="document.getElementById('fileRestore').click()">Restore</button>
         </div>
         <input type="file" id="fileRestore" accept=".json" hidden>
+      </div>
+      <div class="action-card">
+        <div class="ac-ttl">☁ Sync Bundle (Cross-device)</div>
+        <p class="ac-desc">Copy this code to move master + history to another device.</p>
+        <button class="btn-secondary" onclick="generateSyncBundle()">Generate Sync Code</button>
+        <textarea id="syncBundle" class="mf-inp" rows="4" placeholder="Paste sync code here"></textarea>
+        <button class="btn-primary" onclick="importSyncBundle()">Import Sync Code</button>
       </div>
       <div class="action-card danger-card">
         <div class="ac-ttl">🗑 Clear History</div>
@@ -277,8 +309,8 @@
         <div class="mf"><label>RMS ID</label><input id="eRms" class="mf-inp"></div>
       </div>
       <div class="mf2">
-        <div class="mf"><label>Alshaya Code</label><input id="eAlshaya" class="mf-inp"></div>
-        <div class="mf"><label>New Alshaya Code</label><input id="eNewAlshaya" class="mf-inp"></div>
+        <div class="mf"><label>Item Code</label><input id="eAlshaya" class="mf-inp"></div>
+        <div class="mf"><label>Alt Item Code</label><input id="eNewAlshaya" class="mf-inp"></div>
       </div>
       <div class="mf"><label>Brand</label><input id="eBrand" class="mf-inp"></div>
       <div class="mf"><label>Supplier</label><input id="eSupplierEdit" class="mf-inp"></div>
