@@ -263,14 +263,6 @@ body{font-family:var(--fb);background:radial-gradient(circle at 10% 10%,#ffffff,
 @keyframes spin{to{transform:rotate(360deg)}}
 #loadingMsg{font-size:.8rem;color:var(--t2);font-family:var(--fm);}
 .hidden{display:none!important;}
-input,textarea{text-transform:uppercase;}
-
-@media (prefers-color-scheme:dark){
-  body:not(.light){
-    --b0:#0b1220; --b1:rgba(17,25,40,.78); --b2:rgba(17,25,40,.66); --b3:rgba(30,41,59,.75); --b4:#1e293b; --b5:#334155;
-    --t1:#e2e8f0; --t2:#94a3b8; --t3:#64748b; --bd:rgba(255,255,255,.08); --bd2:rgba(255,255,255,.16);
-  }
-}
 
 @media (max-width:640px){
   .tb-brand{font-size:.94rem;}

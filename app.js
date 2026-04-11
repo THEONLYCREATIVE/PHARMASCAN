@@ -624,13 +624,12 @@ function showPanel() {
 async function saveItem() {
   const d = S.draft; if (!d) return;
   const iso = document.getElementById('cpExpiry').value;
-  const nameInput = document.getElementById('cpNameInput').value.trim().toUpperCase();
+  const nameInput = document.getElementById('cpNameInput').value.trim();
   if (!nameInput) { toast('Please enter product name', 'warn'); return; }
   d.name          = nameInput;
   d.expiryISO     = iso;
   d.expiryDisplay = iso ? isoMonthYearDisplay(iso) : '';
-  d.batch         = document.getElementById('cpBatch').value.trim().toUpperCase();
-  d.supplierName  = document.getElementById('cpSupplierInput').value.trim().toUpperCase();
+  d.batch         = document.getElementById('cpBatch').value.trim();
   d.qty           = parseInt(document.getElementById('cpQty').value) || 1;
   await DB.add('history', d);
 
@@ -892,7 +891,7 @@ async function saveEdit() {
   h.name           = document.getElementById('eName').value.trim().toUpperCase();
   h.expiryISO      = iso;
   h.expiryDisplay  = iso ? isoMonthYearDisplay(iso) : '';
-  h.batch          = document.getElementById('eBatch').value.trim().toUpperCase();
+  h.batch          = document.getElementById('eBatch').value.trim();
   h.qty            = parseInt(document.getElementById('eQty').value) || 1;
   h.rmsId          = document.getElementById('eRms').value.trim().toUpperCase();
   h.alshayaCode    = document.getElementById('eAlshaya').value.trim().toUpperCase();
