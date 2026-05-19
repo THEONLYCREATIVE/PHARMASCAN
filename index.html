@@ -81,16 +81,16 @@
   </header>
 
   <nav class="nav-tabs">
-    <div class="tab-btn active" data-tab="tabScan">SCAN STATION</div>
-    <div class="tab-btn" data-tab="tabMaster">MASTER CATALOGUE</div>
-    <div class="tab-btn" data-tab="tabConfig">SYSTEM CONFIG</div>
+    <div class="tab-btn active" data-tab="tabScan">SCAN AREA</div>
+    <div class="tab-btn" data-tab="tabMaster">LOOKUP FILE</div>
+    <div class="tab-btn" data-tab="tabConfig">SYSTEM SETTINGS</div>
   </nav>
 
   <!-- TAB 1: SCAN STATION -->
   <main id="tabScan" class="tab-pane active">
     <div class="scan-box">
       <input type="text" id="barcodeInput" placeholder="Awaiting hardware wedge barcode data scanner scan event..." style="flex:1;" autofocus autocomplete="off">
-      <button id="btnCam" class="btn-prime">Camera Mode</button>
+      <button id="btnCam" class="btn-prime">MOBILE-CAM MODE</button>
     </div>
 
     <div id="camBox" class="hidden"></div>
@@ -98,15 +98,15 @@
     <div class="dashboard">
       <div class="stat-card selected" data-filter="all">
         <div class="num" id="cntTotal">0</div>
-        <div class="lbl">Total Logged</div>
+        <div class="lbl">TOTAL SCANNED</div>
       </div>
       <div class="stat-card" data-filter="expired">
         <div class="num" id="cntExpired" style="color:var(--err);">0</div>
-        <div class="lbl">Short/Expired</div>
+        <div class="lbl">NEAR EXPIRY/EXPIRED</div>
       </div>
       <div class="stat-card" data-filter="noexp">
         <div class="num" id="cntNoExp" style="color:var(--warn);">0</div>
-        <div class="lbl">No Expiry</div>
+        <div class="lbl">NO EXPIRY-DATE</div>
       </div>
     </div>
 
