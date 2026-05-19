@@ -37,15 +37,6 @@
 // ═══════════════════════════════════════════════════
 // ██████  EMBEDDED MASTER DATABASE STRING
 // ═══════════════════════════════════════════════════
-/**
- * EMBEDDED_MASTER_DB — Tab-separated product database string.
- * This is the "database string" that seeds the app on first launch.
- * Replace or extend rows to embed your own product catalogue.
- * Column order MUST match the header row exactly.
- *
- * Auto-loaded when: IndexedDB master store is empty on init.
- * Can be refreshed via: Master tab → Upload / Replace Master.
- */
 const EMBEDDED_MASTER_DB = `BARCODE\tRMS ID\tALSHAYA CODE\tNEW ALSHAYA CODE\tDESCRIPTION\tBRAND\tSUPPLIER\tEXPIRY DATE\tBATCH NO
 4015630982110\t220216906\tY3BOY358100197A\tBZBTSLOACC82110\tACCUCHECK PERFORMA 50S\tACCUCHECK\tPHARMATRADE\t30/06/2026\tLOT-A1
 8436009781961\t220084480\tB2BOB29781961\tB2BOB29781961\tABRIL NAT SHAMPOO MASK 200ML\tABRIL ET NATURE\tCIGALAH MEDPHARM\t12/2025\t
@@ -175,19 +166,10 @@ const DB = {
 // ═══════════════════════════════════════════════════
 // DATABASE STRING SEEDER
 // ═══════════════════════════════════════════════════
-/**
- * parseDatabaseString(str)
- * Parses the EMBEDDED_MASTER_DB tab-separated string and returns
- * an array of normalised product objects ready for IndexedDB.
- *
- * Also used by uploadMaster() to parse user-uploaded TSV/CSV files
- * via the same pipeline — ensuring consistent field mapping.
- */
 function parseDatabaseString(str, delim = '\t') {
   const lines = str.trim().split(/[\r\n]+/);
   if (lines.length < 2) return [];
   const header = lines[0];
-  // Auto-detect delimiter if not forced
   if (!delim) delim = header.includes('\t') ? '\t' : ',';
   const cols = header.split(delim).map(c => c.trim().replace(/^["']|["']$/g, '').toLowerCase());
 
@@ -228,16 +210,10 @@ function parseDatabaseString(str, delim = '\t') {
   return items;
 }
 
-/**
- * seedEmbeddedDatabase()
- * Called once on first launch. Loads EMBEDDED_MASTER_DB into IndexedDB
- * master store if and only if the store is currently empty.
- * Marks seed as done in settings so it never runs again automatically.
- */
 async function seedEmbeddedDatabase() {
   try {
     const count = await DB.count('master');
-    if (count > 0) return; // already has data — skip
+    if (count > 0) return; 
     const seeded = await DB.get('settings', CFG.SEED_KEY).catch(() => null);
     if (seeded) return;
 
@@ -255,16 +231,7 @@ async function seedEmbeddedDatabase() {
 // ═══════════════════════════════════════════════════
 // GS1 BARCODE PARSER  —  OFFLINE FULL EDITION
 // ═══════════════════════════════════════════════════
-/**
- * Full offline GS1 parser supporting:
- *  • Human Readable Interpretation (HRI) format: (01)12345…(17)YYMMDD
- *  • Raw GS1-128 / DataBar / DataMatrix with GS (0x1D) separators
- *  • Plain EAN-8, EAN-13, UPC-A, UPC-E, ITF-14
- *  • GS1 QR Code composite component
- *  • All variable-length AIs using the official FNC1 separator table
- */
 const GS1 = {
-  // Fixed-length AI definitions  →  [ai_prefix, total_data_length]
   FIXED: {
     '00':18,'01':14,'02':14,'03':14,'04':18,'11':6,'12':6,'13':6,'14':6,
     '15':6,'16':6,'17':6,'18':6,'19':6,'20':2,
@@ -286,7 +253,6 @@ const GS1 = {
     const hasParens = code.includes('(');
     const hasRaw    = /^0[01]\d{12,18}/.test(code);
 
-    // Plain EAN / UPC / ITF — no GS1 application identifiers
     if (!hasParens && !hasRaw && !code.includes(GS)) {
       const d = code.replace(/\D/g, '');
       if (d.length >= 8 && d.length <= 18) out.gtin = d.padStart(14, '0');
@@ -294,17 +260,10 @@ const GS1 = {
     }
 
     out.isGS1 = true;
-
-    if (hasParens) {
-      this._parseHRI(code, out);
-    } else {
-      this._parseRaw(code, out);
-    }
-
+    if (hasParens) { this._parseHRI(code, out); } else { this._parseRaw(code, out); }
     return out;
   },
 
-  /** Parse Human Readable Interpretation: (AI)value(AI)value… */
   _parseHRI(code, out) {
     const re = /\((\d{2,4})\)([^(]*)/g;
     let m;
@@ -315,13 +274,10 @@ const GS1 = {
     }
   },
 
-  /** Parse raw GS1 byte stream with FNC1 (GS) separators */
   _parseRaw(code, out) {
     let pos = 0;
     while (pos < code.length) {
       if (code[pos] === '\x1D') { pos++; continue; }
-
-      // Try 4-char AI first, then 3-char, then 2-char
       let ai = null, dataStart = 0;
       for (const len of [4, 3, 2]) {
         const candidate = code.slice(pos, pos + len);
@@ -335,7 +291,6 @@ const GS1 = {
         val     = code.slice(dataStart, dataStart + fixedLen);
         nextPos = dataStart + fixedLen;
       } else {
-        // Variable length — read until GS or end
         const end = this._scanToGS(code, dataStart);
         val     = code.slice(dataStart, end);
         nextPos = end;
@@ -348,8 +303,7 @@ const GS1 = {
   _knownAI(ai) {
     const n = parseInt(ai);
     if (isNaN(n)) return false;
-    // Known ranges
-    if (n >= 0  && n <= 99)  return true;
+    if (n >= 0  && n <= 99)   return true;
     if (n >= 100 && n <= 179) return true;
     if (n >= 310 && n <= 369) return true;
     if (n >= 400 && n <= 703) return true;
@@ -359,7 +313,6 @@ const GS1 = {
 
   _fixedLen(ai) {
     if (this.FIXED[ai] !== undefined) return this.FIXED[ai];
-    // 31nn–36nn: 6 chars
     if (/^3[1-6]\d$/.test(ai)) return 6;
     return null;
   },
@@ -387,7 +340,6 @@ const GS1 = {
       case '400': out.orderNo    = val; break;
       case '7003': out.expiryISO = out.expiryISO || this._dateFromYYMMDD(val.slice(0,6)); break;
     }
-    // 310n–316n: net weight kg
     if (/^31[0-6]$/.test(ai)) {
       const dec = parseInt(ai[2]);
       out.netWeight = (parseInt(val) / Math.pow(10, dec)).toFixed(dec) + ' kg';
@@ -406,8 +358,7 @@ const GS1 = {
     const iso = this._dateFromYYMMDD(yymmdd);
     if (iso) {
       r.expiryISO     = iso;
-      const d = new Date(iso + 'T00:00:00');
-      r.expiryDisplay = `${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()}`;
+      r.expiryDisplay = isoMonthYearDisplay(iso);
     }
   },
 
@@ -419,12 +370,10 @@ const GS1 = {
     return d < 0 ? 'expired' : d <= CFG.SOON_DAYS ? 'expiring' : 'ok';
   },
 
-  /** Format all decoded AIs as a readable string for diagnostics */
   formatAIs(parsed) {
     const map = {
       '00':'SSCC','01':'GTIN','10':'BATCH','11':'PROD DATE','15':'BEST BEFORE',
-      '17':'EXPIRY','21':'SERIAL','30':'QTY','37':'QTY VAR','400':'ORDER NO',
-      '7003':'EXPIRY+TIME'
+      '17':'EXPIRY','21':'SERIAL','30':'QTY','37':'QTY VAR','400':'ORDER NO','7003':'EXPIRY+TIME'
     };
     return Object.entries(parsed.allAIs)
       .map(([ai,v]) => `(${ai}) ${map[ai]||'AI'}: ${v}`)
@@ -443,7 +392,6 @@ function parseExpiry(raw) {
   const last = (y, m) => new Date(y, m, 0).getDate();
   const MO = {JAN:1,FEB:2,MAR:3,APR:4,MAY:5,JUN:6,JUL:7,AUG:8,SEP:9,OCT:10,NOV:11,DEC:12};
 
-  // Excel serial (numeric 40000–80000)
   const num = parseFloat(s);
   if (!isNaN(num) && num > 40000 && num < 80000 && !/[\/\-]/.test(s)) {
     const d = new Date(Math.round((num - 25569) * 86400 * 1000));
@@ -586,13 +534,12 @@ function showPanel() {
   document.getElementById('cpName').textContent      = d.name;
   document.getElementById('cpNameInput').value       = d.name || '';
   document.getElementById('cpRms').textContent       = d.rmsId       ? `RMS: ${d.rmsId}`       : '';
-  document.getElementById('cpBrand').textContent     = d.brand       ? d.brand                  : '';
+  document.getElementById('cpBrand').textContent     = d.brand       ? d.brand                 : '';
   document.getElementById('cpSupplier').textContent  = d.supplierName ? d.supplierName          : '';
   document.getElementById('cpGtin').textContent      = d.gtin        ? `GTIN: ${d.gtin}`        : '';
   document.getElementById('cpAlshaya').textContent   = d.alshayaCode ? `AC: ${d.alshayaCode}`   : '';
   document.getElementById('cpNewAlshaya').textContent = d.newAlshayaCode ? `NAC: ${d.newAlshayaCode}` : '';
 
-  // Show decoded AI summary if GS1 barcode
   const aiRow = document.getElementById('cpAiRow');
   if (aiRow) {
     aiRow.textContent = d.gs1AIs || '';
@@ -600,7 +547,7 @@ function showPanel() {
   }
 
   const src = document.getElementById('expirySrc');
-  if (d.expirySrc === 'gs1')     { src.textContent = '✓ Expiry from GS1 barcode';              src.className = 'expiry-src es-gs1'; }
+  if (d.expirySrc === 'gs1')     { src.textContent = '✓ Expiry from GS1 barcode';               src.className = 'expiry-src es-gs1'; }
   else if (d.expirySrc === 'master') { src.textContent = '✓ Expiry loaded from master database'; src.className = 'expiry-src es-master'; }
   else                           { src.textContent = '⚠ No expiry — enter or scan label';       src.className = 'expiry-src es-manual'; }
 
@@ -626,11 +573,14 @@ async function saveItem() {
   const iso = document.getElementById('cpExpiry').value;
   const nameInput = document.getElementById('cpNameInput').value.trim();
   if (!nameInput) { toast('Please enter product name', 'warn'); return; }
+  
   d.name          = nameInput;
   d.expiryISO     = iso;
   d.expiryDisplay = iso ? isoMonthYearDisplay(iso) : '';
   d.batch         = document.getElementById('cpBatch').value.trim();
   d.qty           = parseInt(document.getElementById('cpQty').value) || 1;
+  d.supplierName  = document.getElementById('cpSupplierInput').value.trim();
+  
   await DB.add('history', d);
 
   if (document.getElementById('cpAddToMaster').checked) {
@@ -679,6 +629,7 @@ async function runOCR(file) {
     const iso = extractOCRDate(text);
     if (iso) {
       document.getElementById('cpExpiry').value = iso;
+      syncExpiryPickerFromISO(iso);
       st.textContent = `✅ Found: ${isoDisplay(iso)}`;
       toast('Expiry extracted from label!', 'ok');
     } else {
@@ -725,7 +676,6 @@ function downloadTemplate() {
   toast('Template downloaded (includes embedded database)');
 }
 
-/** Export the embedded database string as a raw file for inspection */
 function downloadEmbeddedDB() {
   dlFile(EMBEDDED_MASTER_DB, 'pharmascan-embedded-db.tsv', 'text/tab-separated-values');
   toast('Embedded database string exported');
@@ -741,7 +691,7 @@ async function exportCSV(filter = 'all') {
   if (!hist.length) { toast('No data to export', 'warn'); return; }
 
   const SEP = '\t';
-  const hdr = ['Scan Barcode','RMS','Item Code','Description','Brand','Supplier Name','QTY','Expiry Date','Batch No'];
+  const hdr = ['Scan Barcode','RMS','Alshaya Code','Description','Brand','Supplier Name','QTY','Expiry Date','Batch No'];
   const rows = hist.map(h => [
     h.gtin           || '',
     h.rmsId          || '',
@@ -766,409 +716,326 @@ async function downloadBackup() {
     JSON.stringify({ version: CFG.VER, date: new Date().toISOString(), history: hist, master: mstr }, null, 2),
     `pharmascan-backup-${fmtDate()}.json`, 'application/json'
   );
-  toast('Backup downloaded', 'ok');
-}
-
-async function restoreBackup(file) {
-  showLoad('Restoring…');
-  try {
-    const bk = JSON.parse(await file.text());
-    if (!bk.history && !bk.master) { toast('Invalid backup', 'err'); hideLoad(); return; }
-    if (bk.history?.length) { await DB.clear('history'); for (const it of bk.history) { delete it.id; await DB.add('history', it); } }
-    if (bk.master?.length)  { await DB.clear('master');  await DB.bulkMaster(bk.master); }
-    await refreshAll();
-    toast(`Restored ${bk.history?.length || 0} items`, 'ok');
-  } catch { toast('Restore failed', 'err'); }
-  hideLoad();
-}
-
-async function clearHistory() {
-  if (!confirm('Delete ALL scanned items?')) return;
-  await DB.clear('history');
-  await refreshAll();
-  toast('History cleared');
+  toast('Backup downloaded');
 }
 
 // ═══════════════════════════════════════════════════
-// UI REFRESH
+// HELPER METHODS & STATE SYNCHRONISATION
 // ═══════════════════════════════════════════════════
-async function refreshAll() {
-  await Promise.all([refreshStats(), refreshRecent(), refreshHistory(), refreshMasterCount()]);
-}
+function normBC(b) { return b.replace(/\D/g, ''); }
+function p2(n) { return String(n).padStart(2, '0'); }
+function fmtDate() { const d = new Date(); return `${d.getFullYear()}${p2(d.getMonth()+1)}${p2(d.getDate())}`; }
 
-async function refreshStats() {
-  const h = await DB.getAll('history');
-  let exp = 0, soon = 0, ok = 0;
-  for (const i of h) {
-    const s = GS1.status(i.expiryISO);
-    if (s === 'expired') exp++; else if (s === 'expiring') soon++; else if (s === 'ok') ok++;
-  }
-  document.getElementById('cnExpired').textContent  = exp;
-  document.getElementById('cnExpiring').textContent = soon;
-  document.getElementById('cnOk').textContent       = ok;
-}
-
-async function refreshRecent() {
-  const h = (await DB.getAll('history')).sort((a,b) => b.ts - a.ts).slice(0, 8);
-  document.getElementById('recentList').innerHTML = h.length
-    ? h.map(i => card(i)).join('')
-    : empty('📦', 'No items yet', 'Scan a barcode to start');
-}
-
-async function refreshHistory() {
-  let h = (await DB.getAll('history')).sort((a,b) => b.ts - a.ts);
-  if (S.filter !== 'all') h = h.filter(i => GS1.status(i.expiryISO) === S.filter);
-  if (S.search) {
-    const q = S.search.toLowerCase();
-    h = h.filter(i => [i.name,i.gtin,i.rmsId,i.batch,i.brand,i.supplierName]
-      .some(v => (v||'').toLowerCase().includes(q)));
-  }
-  document.getElementById('historyList').innerHTML = h.length
-    ? h.map(i => card(i, true)).join('')
-    : empty('🔍', 'No items', 'Try a different filter or search');
-}
-
-async function refreshMasterCount() {
-  const m = await DB.getAll('master');
-  document.getElementById('masterCount').textContent = m.length;
-  Master.build(m);
-  S.namePool = [...new Set(m.map(x => (x.name || '').trim()).filter(Boolean))];
-  S.supplierPool = [...new Set(m.map(x => (x.supplierName || '').trim()).filter(Boolean))];
-  updateDatalist('nameSuggestions', S.namePool);
-  updateDatalist('supplierSuggestions', S.supplierPool);
-}
-
-function card(h, actions = false) {
-  const st  = GS1.status(h.expiryISO);
-  const lbl = { expired:'EXPIRED', expiring:'EXPIRING SOON', ok: h.expiryDisplay || 'OK', noexp:'NO EXPIRY' }[st];
-  return `<div class="item-card s-${st}">
-    <div class="ic-r1">
-      <span class="ic-name">${esc(h.name)}</span>
-      <span class="ic-badge">${lbl}</span>
-    </div>
-    <div class="ic-grid">
-      <div class="ic-f"><span class="ic-fl">SCAN BARCODE</span><span class="ic-fv">${h.gtin||'—'}</span></div>
-      <div class="ic-f"><span class="ic-fl">RMS</span><span class="ic-fv">${h.rmsId||'—'}</span></div>
-      <div class="ic-f"><span class="ic-fl">SUPPLIER</span><span class="ic-fv">${h.supplierName||'—'}</span></div>
-      <div class="ic-f"><span class="ic-fl">BRAND</span><span class="ic-fv">${h.brand||'—'}</span></div>
-      <div class="ic-f"><span class="ic-fl">BATCH NO</span><span class="ic-fv">${h.batch||'—'}</span></div>
-      <div class="ic-f"><span class="ic-fl">QTY</span><span class="ic-fv">${h.qty||1}</span></div>
-    </div>
-    ${actions ? `<div class="ic-acts">
-      <button class="ic-btn edit"   onclick="openEdit(${h.id})">✏ Edit</button>
-      <button class="ic-btn delete" onclick="delItem(${h.id})">🗑 Delete</button>
-    </div>` : ''}
-  </div>`;
-}
-
-function empty(ico, title, sub) {
-  return `<div class="empty-state"><div class="es-ico">${ico}</div><div class="es-ttl">${title}</div><div class="es-sub">${sub}</div></div>`;
-}
-
-// ═══════════════════════════════════════════════════
-// EDIT / DELETE
-// ═══════════════════════════════════════════════════
-async function openEdit(id) {
-  const h = await DB.get('history', id); if (!h) return;
-  document.getElementById('eId').value           = id;
-  document.getElementById('eName').value          = h.name || '';
-  document.getElementById('eGtin').value          = h.gtin || '';
-  document.getElementById('eExpiry').value        = h.expiryISO || '';
-  document.getElementById('eBatch').value         = h.batch || '';
-  document.getElementById('eQty').value           = h.qty || 1;
-  document.getElementById('eRms').value           = h.rmsId || '';
-  document.getElementById('eAlshaya').value       = h.alshayaCode || '';
-  document.getElementById('eNewAlshaya').value    = h.newAlshayaCode || '';
-  document.getElementById('eBrand').value         = h.brand || '';
-  document.getElementById('eSupplierEdit').value  = h.supplierName || '';
-  document.getElementById('editModal').classList.remove('hidden');
-}
-
-async function saveEdit() {
-  const id = parseInt(document.getElementById('eId').value);
-  const h  = await DB.get('history', id); if (!h) return;
-  const iso = document.getElementById('eExpiry').value;
-  h.name           = document.getElementById('eName').value.trim().toUpperCase();
-  h.expiryISO      = iso;
-  h.expiryDisplay  = iso ? isoMonthYearDisplay(iso) : '';
-  h.batch          = document.getElementById('eBatch').value.trim();
-  h.qty            = parseInt(document.getElementById('eQty').value) || 1;
-  h.rmsId          = document.getElementById('eRms').value.trim().toUpperCase();
-  h.alshayaCode    = document.getElementById('eAlshaya').value.trim().toUpperCase();
-  h.newAlshayaCode = document.getElementById('eNewAlshaya').value.trim().toUpperCase();
-  h.brand          = document.getElementById('eBrand').value.trim().toUpperCase();
-  h.supplierName   = document.getElementById('eSupplierEdit').value.trim().toUpperCase();
-  await DB.put('history', h);
-  closeEditModal();
-  await refreshAll();
-  toast('Saved', 'ok');
-}
-
-function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); }
-
-async function delItem(id) {
-  if (!confirm('Delete this item?')) return;
-  await DB.del('history', id);
-  await refreshAll();
-  toast('Deleted');
-}
-
-// ═══════════════════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════════════════
-function showPage(id) {
-  document.querySelectorAll('.pg').forEach(p => p.classList.remove('active'));
-  document.getElementById(id)?.classList.add('active');
-  document.querySelectorAll('.bnav-item').forEach(b => b.classList.toggle('active', b.dataset.page === id));
-  if (id !== 'pg-scan' && S.camActive) stopCam();
-}
-
-// ═══════════════════════════════════════════════════
-// CAMERA
-// ═══════════════════════════════════════════════════
-async function toggleCam() { S.camActive ? stopCam() : startCam(); }
-async function startCam() {
-  const rdr = document.getElementById('cam-reader');
-  rdr.classList.remove('hidden');
-  try {
-    S.camInst = new Html5Qrcode('cam-reader');
-    const cams = await Html5Qrcode.getCameras();
-    if (!cams.length) { toast('No camera', 'err'); return; }
-    const back = cams.find(c => /(back|rear|environment)/i.test(c.label)) || cams[0];
-    await S.camInst.start(back.id,
-      { fps:10, qrbox:{ width:250, height:250 }, formatsToSupport:[
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.QR_CODE,
-        Html5QrcodeSupportedFormats.DATA_MATRIX,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.ITF
-      ]},
-      async txt => { await stopCam(); document.getElementById('barcodeInput').value = txt; await handleBarcode(txt); },
-      () => {}
-    );
-    S.camActive = true;
-    const b = document.getElementById('btnCam');
-    b.style.background = 'var(--red)'; b.style.color = '#fff';
-  } catch (e) {
-    toast('Camera: ' + e.message, 'err');
-    document.getElementById('cam-reader').classList.add('hidden');
-  }
-}
-async function stopCam() {
-  if (S.camInst) { try { await S.camInst.stop(); S.camInst.clear(); } catch {} S.camInst = null; }
-  S.camActive = false;
-  document.getElementById('cam-reader').classList.add('hidden');
-  const b = document.getElementById('btnCam'); b.style.background = ''; b.style.color = '';
-}
-
-// ═══════════════════════════════════════════════════
-// UTILITIES
-// ═══════════════════════════════════════════════════
-function p2(n)      { return String(n).padStart(2, '0'); }
-function normBC(s)  { return String(s || '').replace(/\D/g, ''); }
-function esc(s)     { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function fmtDate()  { const d = new Date(); return `${d.getFullYear()}${p2(d.getMonth()+1)}${p2(d.getDate())}`; }
-function isoDisplay(iso) {
-  if (!iso) return '';
-  const d = new Date(iso + 'T00:00:00');
-  return `${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()}`;
-}
 function isoMonthYearDisplay(iso) {
   if (!iso) return '';
-  const d = new Date(iso + 'T00:00:00');
-  return `${p2(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`;
+  const parts = iso.split('-');
+  return parts.length >= 2 ? `${p2(parts[2])}/${p2(parts[1])}/${parts[0]}` : iso;
 }
-function monthYearToISO(month, year) {
-  if (!month || !year) return '';
-  const y = Number(year), m = Number(month);
-  const last = new Date(y, m, 0).getDate();
-  return `${y}-${p2(m)}-${p2(last)}`;
+
+function isoDisplay(iso) {
+  return isoMonthYearDisplay(iso);
 }
-function syncExpiryPickerFromISO(iso) {
-  const m = document.getElementById('cpExpMonth');
-  const y = document.getElementById('cpExpYear');
-  if (!m || !y) return;
-  if (!iso) {
-    m.value = '';
-    y.value = '';
-    document.getElementById('btnExpiryPicker').textContent = 'Press Expiry to Add (MM/YY)';
-    return;
-  }
-  const d = new Date(iso + 'T00:00:00');
-  m.value = String(d.getMonth() + 1);
-  y.value = String(d.getFullYear());
-  document.getElementById('btnExpiryPicker').textContent = `Expiry: ${p2(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`;
+
+function dlFile(str, filename, type) {
+  const blob = new Blob([str], { type });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
 }
-function dlFile(c, n, m) {
-  const a = Object.assign(document.createElement('a'), {
-    href: URL.createObjectURL(new Blob([c], { type: m })),
-    download: n
-  });
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+
+function toast(msg, type = 'ok') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3000);
 }
-function vibrate(t) {
+
+function vibrate(typ) {
   if (!navigator.vibrate) return;
-  ({ light:[10], medium:[30], success:[30,50,30] })[t] &&
-    navigator.vibrate(({ light:[10], medium:[30], success:[30,50,30] })[t]);
+  if (typ === 'success') navigator.vibrate([60, 40, 60]);
+  else if (typ === 'medium') navigator.vibrate(80);
+  else if (typ === 'err') navigator.vibrate([150, 50, 150]);
 }
-function toast(msg, type = 'info') {
-  const el = document.createElement('div');
-  el.className = `toast ${type}`; el.textContent = msg;
-  document.getElementById('toasts').appendChild(el);
-  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(() => el.remove(), 300); }, 2800);
+
+function showLoad(msg) { document.getElementById('loaderMsg').textContent = msg; document.getElementById('loader').classList.remove('hidden'); }
+function hideLoad() { document.getElementById('loader').classList.add('hidden'); }
+
+async function refreshMasterCount() {
+  const c = await DB.count('master');
+  document.getElementById('lblMasterCount').textContent = `${c} items loaded`;
+  const mRows = await DB.getAll('master');
+  Master.build(mRows);
+  buildAutocompletes(mRows);
 }
-function updateDatalist(id, arr) {
+
+function buildAutocompletes(rows) {
+  const names = new Set(), sups = new Set();
+  for (const r of rows) {
+    if (r.name) names.add(r.name);
+    if (r.supplierName) sups.add(r.supplierName);
+  }
+  S.namePool = Array.from(names);
+  S.supplierPool = Array.from(sups);
+  updateDatalist('dlNames', S.namePool);
+  updateDatalist('dlSuppliers', S.supplierPool);
+}
+
+function updateDatalist(id, list) {
   const dl = document.getElementById(id);
   if (!dl) return;
-  dl.innerHTML = arr.slice(0, 40).map(v => `<option value="${esc(v)}"></option>`).join('');
-}
-function upperInput(el) { el.value = (el.value || '').toUpperCase(); }
-async function generateSyncBundle() {
-  const [history, master] = await Promise.all([DB.getAll('history'), DB.getAll('master')]);
-  const payload = btoa(unescape(encodeURIComponent(JSON.stringify({ version: CFG.VER, history, master }))));
-  document.getElementById('syncBundle').value = payload;
-  toast('Sync code ready. Copy to other device.', 'ok');
-}
-async function importSyncBundle() {
-  try {
-    const txt = document.getElementById('syncBundle').value.trim();
-    if (!txt) return toast('Paste sync code first', 'warn');
-    const data = JSON.parse(decodeURIComponent(escape(atob(txt))));
-    if (!data.master || !data.history) return toast('Invalid sync code', 'err');
-    await DB.clear('master');
-    await DB.clear('history');
-    await DB.bulkMaster(data.master);
-    for (const it of data.history) { delete it.id; await DB.add('history', it); }
-    await refreshAll();
-    toast('Sync imported successfully', 'ok');
-  } catch {
-    toast('Invalid sync code', 'err');
+  dl.innerHTML = '';
+  for (const item of list) {
+    const o = document.createElement('option');
+    o.value = item;
+    dl.appendChild(o);
   }
 }
-function showLoad(m = 'Loading…') {
-  document.getElementById('loadingMsg').textContent = m;
-  document.getElementById('loadingOverlay').classList.remove('hidden');
-}
-function hideLoad() { document.getElementById('loadingOverlay').classList.add('hidden'); }
 
-// ═══════════════════════════════════════════════════
-// EVENTS
-// ═══════════════════════════════════════════════════
-function setupEvents() {
-  const bi = document.getElementById('barcodeInput');
-  bi.addEventListener('keydown', async e => { if (e.key === 'Enter') { e.preventDefault(); await handleBarcode(bi.value); bi.value = ''; } });
-  bi.addEventListener('paste', () => setTimeout(async () => { await handleBarcode(bi.value); bi.value = ''; }, 80));
-  bi.addEventListener('input', e => upperInput(e.target));
+function populateExpiryPickers() {
+  const mSel = document.getElementById('expMonth');
+  const ySel = document.getElementById('expYear');
+  if (!mSel || !ySel) return;
 
-  document.getElementById('btnCam').addEventListener('click', toggleCam);
-  document.getElementById('btnTheme')?.addEventListener('click', () => {
-    document.body.classList.toggle('dark');
-    localStorage.setItem('pharmacy_theme', document.body.classList.contains('dark') ? 'dark' : 'light');
-  });
-  document.getElementById('btnSave').addEventListener('click', saveItem);
-  document.getElementById('btnSkip').addEventListener('click', dismissPanel);
-  document.getElementById('cpDismiss').addEventListener('click', dismissPanel);
+  mSel.innerHTML = '<option value="">MM</option>';
+  for (let m = 1; m <= 12; m++) {
+    const o = document.createElement('option');
+    o.value = p2(m);
+    o.textContent = p2(m);
+    mSel.appendChild(o);
+  }
 
-  document.getElementById('cpExpiry').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('cpBatch').focus(); } });
-  document.getElementById('btnExpiryPicker').addEventListener('click', () => {
-    document.getElementById('expiryPicker').classList.toggle('hidden');
-  });
-  const onExpiryPick = () => {
-    const month = document.getElementById('cpExpMonth').value;
-    const year = document.getElementById('cpExpYear').value;
-    const iso = monthYearToISO(month, year);
-    document.getElementById('cpExpiry').value = iso;
-    if (iso) {
-      document.getElementById('btnExpiryPicker').textContent = `Expiry: ${p2(Number(month))}/${String(year).slice(-2)}`;
-      document.getElementById('expiryPicker').classList.add('hidden');
-    }
-  };
-  document.getElementById('cpExpMonth').addEventListener('change', onExpiryPick);
-  document.getElementById('cpExpYear').addEventListener('change', onExpiryPick);
-  document.getElementById('cpBatch').addEventListener('keydown',  e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btnSave').click(); } });
-  document.getElementById('cpBatch').addEventListener('input', e => upperInput(e.target));
-  document.getElementById('cpSupplierInput').addEventListener('input', e => upperInput(e.target));
-  document.getElementById('cpNameInput').addEventListener('input', e => {
-    upperInput(e.target);
-    const q = e.target.value.trim().toLowerCase();
-    if (!q) return;
-    const match = [...S.masterIdx.values()].find(x => (x.name || '').toLowerCase().startsWith(q));
-    if (match && !document.getElementById('cpSupplierInput').value) {
-      document.getElementById('cpSupplierInput').value = (match.supplierName || '').toUpperCase();
-    }
-  });
-
-  document.getElementById('btnOcrToggle').addEventListener('click', () => document.getElementById('ocrBox').classList.toggle('hidden'));
-  document.getElementById('ocrFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) runOCR(f); });
-
-  document.querySelectorAll('.bnav-item').forEach(b => b.addEventListener('click', () => showPage(b.dataset.page)));
-  document.querySelectorAll('.fpill').forEach(p => p.addEventListener('click', () => {
-    S.filter = p.dataset.f;
-    document.querySelectorAll('.fpill').forEach(x => x.classList.remove('active'));
-    p.classList.add('active');
-    refreshHistory();
-  }));
-  document.getElementById('searchInput').addEventListener('input', e => { S.search = e.target.value; refreshHistory(); });
-  ['eName','eBatch','eRms','eAlshaya','eNewAlshaya','eBrand','eSupplierEdit'].forEach(id => {
-    document.getElementById(id)?.addEventListener('input', e => upperInput(e.target));
-  });
-
-  document.getElementById('fileMasterReplace').addEventListener('change', e => { if (e.target.files[0]) { uploadMaster(e.target.files[0], false); e.target.value = ''; } });
-  document.getElementById('fileMasterAppend').addEventListener('change',  e => { if (e.target.files[0]) { uploadMaster(e.target.files[0], true);  e.target.value = ''; } });
-  document.getElementById('fileRestore').addEventListener('change',       e => { if (e.target.files[0]) { restoreBackup(e.target.files[0]);        e.target.value = ''; } });
-
-  document.getElementById('editModal').addEventListener('click', e => { if (e.target.id === 'editModal') closeEditModal(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') { dismissPanel(); closeEditModal(); } });
+  ySel.innerHTML = '<option value="">YYYY</option>';
+  const curY = new Date().getFullYear();
+  for (let y = curY - 2; y <= curY + EXPIRY_YEARS_FORWARD; y++) {
+    const o = document.createElement('option');
+    o.value = String(y);
+    o.textContent = String(y);
+    ySel.appendChild(o);
+  }
 }
 
+function syncExpiryPickerFromISO(iso) {
+  const mSel = document.getElementById('expMonth');
+  const ySel = document.getElementById('expYear');
+  if (!mSel || !ySel) return;
+  if (!iso) { mSel.value = ''; ySel.value = ''; return; }
+  const parts = iso.split('-');
+  ySel.value = parts[0] || '';
+  mSel.value = parts[1] || '';
+}
+
+function handlePickerChange() {
+  const m = document.getElementById('expMonth').value;
+  const y = document.getElementById('expYear').value;
+  const target = document.getElementById('cpExpiry');
+  if (!m || !y) { target.value = ''; return; }
+  const lastDay = new Date(parseInt(y), parseInt(m), 0).getDate();
+  target.value = `${y}-${m}-${p2(lastDay)}`;
+}
+
+async function refreshAll() {
+  let hist = await DB.getAll('history');
+  hist.sort((a,b) => b.ts - a.ts);
+
+  const counts = { total: 0, expired: 0, noexp: 0 };
+  const q = S.search.toLowerCase();
+
+  const tbody = document.querySelector('#historyTable tbody');
+  tbody.innerHTML = '';
+
+  for (const h of hist) {
+    const stat = GS1.status(h.expiryISO);
+    counts.total++;
+    if (stat === 'expired' || stat === 'expiring') counts.expired++;
+    if (stat === 'noexp') counts.noexp++;
+
+    if (S.filter === 'expired' && stat !== 'expired' && stat !== 'expiring') continue;
+    if (S.filter === 'noexp' && stat !== 'noexp') continue;
+
+    if (q) {
+      const match = (h.name||'').toLowerCase().includes(q) || 
+                    (h.gtin||'').toLowerCase().includes(q) || 
+                    (h.batch||'').toLowerCase().includes(q) ||
+                    (h.supplierName||'').toLowerCase().includes(q);
+      if (!match) continue;
+    }
+
+    const tr = document.createElement('tr');
+    tr.className = `row-stat-${stat}`;
+    
+    let badge = '<span class="badge ok">Safe</span>';
+    if (stat === 'expired') badge = '<span class="badge exp">Expired</span>';
+    else if (stat === 'expiring') badge = '<span class="badge soon">Soon</span>';
+    else if (stat === 'noexp') badge = '<span class="badge none">Missing</span>';
+
+    tr.innerHTML = `
+      <td>
+        <div class="p-name">${h.name}</div>
+        <div class="p-sub">GTIN: ${h.gtin} · Batch: ${h.batch || '-'}</div>
+      </td>
+      <td class="txt-center">${badge}</td>
+      <td class="txt-center">${h.expiryDisplay || '-'}</td>
+      <td class="txt-center font-bold">${h.qty}</td>
+      <td class="txt-center">
+        <button class="btn-icon btn-del" data-id="${h.id}">✕</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  document.getElementById('cntTotal').textContent = counts.total;
+  document.getElementById('cntExpired').textContent = counts.expired;
+  document.getElementById('cntNoExp').textContent = counts.noexp;
+}
+
 // ═══════════════════════════════════════════════════
-// INIT
+// CAMERA CONTROLLER MODULE (QuaggaJS Interface)
 // ═══════════════════════════════════════════════════
-async function init() {
-  console.log(`🚀 PharmaScan Pro v${CFG.VER} — Offline GS1 Edition`);
+const Cam = {
+  toggle() {
+    if (S.camActive) { Cam.stop(); } else { Cam.start(); }
+  },
+  start() {
+    const box = document.getElementById('camBox');
+    box.classList.remove('hidden');
+    S.camActive = true;
+    document.getElementById('btnCam').textContent = 'Stop Camera';
+    
+    Quagga.init({
+      inputStream: {
+        name: "Live",
+        type: "LiveStream",
+        target: box,
+        constraints: { facingMode: "environment", width: 640, height: 480 }
+      },
+      decoder: {
+        readers: ["code_128_reader", "ean_reader", "ean_8_reader", "upc_reader", "itf_reader"]
+      },
+      locate: true
+    }, (err) => {
+      if (err) { console.error(err); toast('Camera failed to access', 'err'); Cam.stop(); return; }
+      Quagga.start();
+    });
+
+    Quagga.onDetected(Cam._onData);
+  },
+  stop() {
+    Quagga.stop();
+    const box = document.getElementById('camBox');
+    box.classList.add('hidden');
+    box.innerHTML = '';
+    S.camActive = false;
+    document.getElementById('btnCam').textContent = 'Scan via Camera';
+  },
+  _onData(res) {
+    if (!res || !res.codeResult?.code) return;
+    const raw = res.codeResult.code;
+    Cam.stop();
+    handleBarcode(raw);
+  }
+};
+
+// ═══════════════════════════════════════════════════
+// UI INITIALISATION & ORCHESTRATION 
+// ═══════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  populateExpiryPickers();
   try {
-    if (localStorage.getItem('pharmacy_theme') === 'dark') document.body.classList.add('dark');
     await DB.init();
-    await seedEmbeddedDatabase();   // ← loads EMBEDDED_MASTER_DB on first run
+    await seedEmbeddedDatabase();
     await refreshMasterCount();
     await refreshAll();
-    buildExpiryInputs();
-    setupEvents();
-    setTimeout(() => {
-      document.getElementById('splash').classList.add('out');
-      document.getElementById('app').classList.remove('app-hidden');
-      setTimeout(() => document.getElementById('barcodeInput').focus(), 120);
-    }, 2500);
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
-  } catch (e) {
-    console.error(e);
-    document.getElementById('splash').classList.add('out');
-    document.getElementById('app').classList.remove('app-hidden');
+  } catch (err) {
+    console.error(err);
+    toast('Database engine crash', 'err');
   }
-}
 
-function buildExpiryInputs() {
-  const m = document.getElementById('cpExpMonth');
-  const y = document.getElementById('cpExpYear');
-  if (!m || !y) return;
-  for (let i = 1; i <= 12; i++) {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = `${p2(i)}`;
-    m.appendChild(opt);
-  }
-  const nowYear = new Date().getFullYear();
-  for (let i = 0; i < EXPIRY_YEARS_FORWARD; i++) {
-    const year = nowYear + i;
-    const opt = document.createElement('option');
-    opt.value = year;
-    opt.textContent = `${String(year).slice(-2)} (${year})`;
-    y.appendChild(opt);
-  }
-}
+  // Barcode entry key handling
+  document.getElementById('barcodeInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const v = e.target.value.trim();
+      if (v) { handleBarcode(v); e.target.value = ''; }
+    }
+  });
 
-document.readyState === 'loading'
-  ? document.addEventListener('DOMContentLoaded', init)
-  : init();
+  // Structural Navigation Layout Tabs Toggle
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn, .tab-pane').forEach(el => el.classList.remove('active'));
+      b.classList.add('active');
+      document.getElementById(b.dataset.tab).classList.add('active');
+    });
+  });
+
+  // History Operational View Filters
+  document.querySelectorAll('.stat-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      S.filter = card.dataset.filter;
+      refreshAll();
+    });
+  });
+
+  // Reactive Dynamic Instant Searching Engine
+  document.getElementById('searchBar').addEventListener('input', e => {
+    S.search = e.target.value;
+    refreshAll();
+  });
+
+  // Expiry Dropdown selection components binder
+  document.getElementById('expMonth').addEventListener('change', handlePickerChange);
+  document.getElementById('expYear').addEventListener('change', handlePickerChange);
+
+  // History deletion delegator routing
+  document.querySelector('#historyTable tbody').addEventListener('click', async e => {
+    if (e.target.classList.contains('btn-del')) {
+      const id = parseInt(e.target.dataset.id);
+      if (id && confirm('Delete item log instance?')) {
+        await DB.del('history', id);
+        await refreshAll();
+        toast('Record trace eliminated');
+      }
+    }
+  });
+
+  // Modal Panel Closures Binding
+  document.getElementById('btnCancel').addEventListener('click', dismissPanel);
+  document.getElementById('btnSave').addEventListener('click', saveItem);
+
+  // Camera Activation Trigger Wire
+  document.getElementById('btnCam').addEventListener('click', Cam.toggle);
+
+  // OCR Execution Hook
+  document.getElementById('ocrFile').addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (f) { document.getElementById('ocrBox').classList.remove('hidden'); runOCR(f); }
+  });
+
+  // Master Repository Bulk Actions Pipeline Setup
+  document.getElementById('btnUploadMaster').addEventListener('click', () => {
+    const file = document.getElementById('fMaster').files[0];
+    if (file) uploadMaster(file, false); else toast('Select template spreadsheet file first', 'warn');
+  });
+
+  document.getElementById('btnAppendMaster').addEventListener('click', () => {
+    const file = document.getElementById('fMaster').files[0];
+    if (file) uploadMaster(file, true); else toast('Select template spreadsheet file first', 'warn');
+  });
+
+  document.getElementById('btnClearMaster').addEventListener('click', resetMaster);
+  document.getElementById('btnDlTemplate').addEventListener('click', downloadTemplate);
+  document.getElementById('btnDlBackup').addEventListener('click', downloadBackup);
+  document.getElementById('btnExportAll').addEventListener('click', () => exportCSV('all'));
+  document.getElementById('btnExportExp').addEventListener('click', () => exportCSV('expired'));
+  document.getElementById('btnPurgeHistory').addEventListener('click', async () => {
+    if (confirm('Wipe out internal local history log list?')) {
+      await DB.clear('history');
+      await refreshAll();
+      toast('History database cleared');
+    }
+  });
+});
