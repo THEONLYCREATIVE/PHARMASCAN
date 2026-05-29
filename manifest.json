@@ -1,6 +1,6 @@
 {
-  "name": "MY Offline Tracker",
-  "short_name": "MY Tracker",
+  "name": "MY KPI",
+  "short_name": "MY KPI",
   "description": "Offline device-only KPI tracker and GS1 scanner",
   "start_url": "./index.html",
   "display": "standalone",

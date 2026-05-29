@@ -521,12 +521,289 @@ table.excel-sheet td.row-index{background:#f8fafc;text-align:center;font-weight:
 .scanner-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .scanner-note{font-size:10px;color:#94A3B8;margin-top:8px;line-height:1.4}
 
+
+/* CLEAN EXCEL-FIRST SCANNER OPENING */
+.excel-open-page{
+  padding-top:10px!important;
+}
+#scanner .scanner-header-card{
+  margin-top:0;
+  border-radius:10px;
+  padding:9px 11px;
+  background:#ffffff;
+  border:1px solid #cbd5e1;
+  color:#334155;
+}
+#scanner .scanner-title{
+  color:#107c41!important;
+  font-size:14px!important;
+}
+#scanner .signature-tag{
+  color:#64748b!important;
+}
+#scanner .scanner-dock{
+  border-radius:10px;
+  background:#ffffff;
+  border:1px solid #cbd5e1;
+  color:#334155;
+  padding:8px;
+}
+#scanner .status-msg,
+#scanner .scanner-note{
+  color:#64748b!important;
+}
+#scanner .manual-scan-card{
+  border-radius:10px;
+  background:#ffffff;
+  border:1px solid #cbd5e1;
+}
+#scanner .manual-scan-card .rota-title{
+  color:#107c41!important;
+}
+#scanner .manual-scan-card input{
+  background:#f8fafc;
+  border:1px solid #cbd5e1;
+  color:#334155;
+}
+#scanner .grid-workspace{
+  max-height:calc(100vh - 330px);
+  border-radius:10px;
+}
+#scanner .save{
+  border-radius:10px!important;
+}
+
+
+/* FIRST OPENING MENU + YOUR ACHIEVEMENT */
+.first-menu-screen{
+  display:none;
+  min-height:calc(100vh - 80px);
+  padding-bottom:20px;
+}
+.first-menu-screen.active{display:block}
+.menu-hero{
+  margin:12px 18px 12px;
+  padding:18px;
+  border-radius:22px;
+  background:linear-gradient(145deg,rgba(0,94,184,.24),rgba(216,27,96,.14));
+  border:1px solid rgba(75,163,227,.25);
+  box-shadow:0 10px 28px rgba(0,0,0,.24);
+}
+.menu-title{
+  font-size:28px;
+  font-weight:950;
+  color:#fff;
+  line-height:1.05;
+}
+.menu-sub{
+  margin-top:6px;
+  font-size:12px;
+  color:#BFDBFE;
+  font-weight:800;
+}
+.warrior-card{
+  margin:12px 18px;
+  padding:14px;
+  border-radius:18px;
+  background:linear-gradient(145deg,rgba(34,197,94,.16),rgba(0,94,184,.13));
+  border:1px solid rgba(34,197,94,.25);
+}
+.warrior-title{
+  font-size:13px;
+  font-weight:950;
+  color:#fff;
+}
+.warrior-sub{
+  margin-top:5px;
+  font-size:11px;
+  color:#DCFCE7;
+  line-height:1.4;
+}
+.menu-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:11px;
+  padding:0 18px;
+}
+.menu-card{
+  min-height:116px;
+  border:none;
+  border-radius:20px;
+  padding:14px;
+  color:#fff;
+  text-align:left;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+}
+.menu-card:nth-child(1){background:linear-gradient(145deg,#005EB8,#0D1E40)}
+.menu-card:nth-child(2){background:linear-gradient(145deg,#D81B60,#8E24AA)}
+.menu-card:nth-child(3){background:linear-gradient(145deg,#107c41,#0D1E40)}
+.menu-card:nth-child(4){background:linear-gradient(145deg,#F59E0B,#0D1E40)}
+.menu-card:nth-child(5){background:linear-gradient(145deg,#A855F7,#0D1E40)}
+.menu-card:nth-child(6){background:linear-gradient(145deg,#112247,#0D1E40)}
+.menu-icon{
+  font-size:27px;
+  margin-bottom:10px;
+}
+.menu-card img.menu-icon-img{
+  width:30px;
+  height:30px;
+  margin-bottom:10px;
+  filter:invert(1);
+}
+.menu-label{
+  font-size:13px;
+  font-weight:950;
+}
+.menu-small{
+  margin-top:4px;
+  font-size:10px;
+  color:rgba(255,255,255,.78);
+  line-height:1.35;
+}
+.target-mini-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-top:12px;
+}
+.target-mini{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:13px;
+  padding:9px 6px;
+  text-align:center;
+}
+.target-mini .t-l{
+  font-size:8px;
+  color:#BFDBFE;
+  font-weight:950;
+  text-transform:uppercase;
+}
+.target-mini .t-v{
+  margin-top:4px;
+  font-family:var(--mono);
+  font-size:13px;
+  font-weight:950;
+  color:#fff;
+}
+.achievement-title{
+  margin:10px 18px 6px;
+  font-size:22px;
+  font-weight:950;
+  color:#fff;
+}
+.achievement-note{
+  margin:0 18px 10px;
+  color:#BFDBFE;
+  font-size:11px;
+  line-height:1.45;
+}
+.ach-status-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin:0 18px 12px;
+}
+.ach-status{
+  padding:13px;
+  border-radius:17px;
+  background:var(--card);
+  border:1px solid var(--border);
+}
+.ach-status .a-l{
+  font-size:9px;
+  color:var(--text3);
+  font-weight:950;
+  text-transform:uppercase;
+}
+.ach-status .a-v{
+  margin-top:4px;
+  color:#fff;
+  font-weight:950;
+  font-size:16px;
+}
+.rota-week-block{
+  margin:0 18px 14px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  overflow:hidden;
+}
+.rota-week-head{
+  padding:11px 12px;
+  background:var(--bg3);
+  border-bottom:1px solid var(--border);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.rota-week-title{
+  font-size:12px;
+  font-weight:950;
+  color:#fff;
+}
+.rota-week-hours{
+  font-family:var(--mono);
+  font-size:12px;
+  font-weight:950;
+  color:var(--accent);
+}
+.rota-cal-grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+}
+.rota-date-box{
+  min-height:84px;
+  padding:7px 4px;
+  border-right:1px solid rgba(30,58,138,.55);
+  border-bottom:1px solid rgba(30,58,138,.55);
+  text-align:center;
+}
+.rota-date-box:nth-child(7n){border-right:none}
+.rota-date-box.off{
+  background:rgba(239,68,68,.17);
+}
+.rota-date-box.today{
+  background:rgba(75,163,227,.13);
+  box-shadow:inset 0 0 0 1px rgba(75,163,227,.4);
+}
+.rota-date{
+  font-size:15px;
+  font-family:var(--mono);
+  font-weight:950;
+  color:#fff;
+}
+.rota-day{
+  margin-top:1px;
+  font-size:8px;
+  color:var(--text3);
+  font-weight:950;
+  text-transform:uppercase;
+}
+.rota-time{
+  margin-top:7px;
+  font-size:9px;
+  color:#fff;
+  font-weight:950;
+  line-height:1.25;
+}
+.rota-hours{
+  margin-top:4px;
+  font-size:8px;
+  color:#BFDBFE;
+  font-family:var(--mono);
+  font-weight:950;
+}
+#scanner .scanner-page-wrap{
+  padding-top:10px!important;
+}
+
 </style>
 </head>
 <body>
 <div class="topbar">
   <div><div class="logo">MY <span>Tracker</span></div><div class="date" id="dateText"></div></div>
-  <div class="badge" id="storeBadge">MY DXB T3</div>
+  <div class="badge" id="profileBadge">MY KPI</div>
 </div>
 <div class="toast" id="toast">Saved</div>
 <div class="detail-modal" id="detailModal" onclick="closeDayDetail()">
@@ -548,14 +825,33 @@ table.excel-sheet td.row-index{background:#f8fafc;text-align:center;font-weight:
 </div>
 
 
-<section class="screen active" id="scanner">
-  <div class="hero">
-    <div class="pill">🔒 DEVICE ONLY · OFFLINE</div>
-    <div class="hero-title">GS1<br>SCANNER</div>
-    <div class="hero-sub">No cloud · No external connection · Local storage only</div>
+
+<section class="screen active first-menu-screen" id="menu">
+  <div class="menu-hero">
+    <div class="menu-title">MY KPI</div>
+    <div class="menu-sub">Direct entry · scanner · rota · achievements</div>
+    <div class="target-mini-grid">
+      <div class="target-mini"><div class="t-l">Daily</div><div class="t-v">25K</div></div>
+      <div class="target-mini"><div class="t-l">No7</div><div class="t-v">2.5K</div></div>
+      <div class="target-mini"><div class="t-l">Aura</div><div class="t-v">65%</div></div>
+    </div>
   </div>
-  <div class="offline-badge">✅ This KPI + GS1 scanner runs on your device only. Data is saved in this phone/browser local storage. No server upload, no external API, no data leak path added.</div>
-  <div class="scanner-page-wrap">
+  <div class="warrior-card">
+    <div class="warrior-title">You are the warrior 🛡️</div>
+    <div class="warrior-sub" id="menuAchievementText">Team achieved or not — your achievement will show in History.</div>
+  </div>
+  <div class="menu-grid">
+    <button class="menu-card" onclick="show('sales')"><div class="menu-icon">⚡</div><div class="menu-label">Direct Entry</div><div class="menu-small">Enter sales, No7, Aura and KPI quickly.</div></button>
+    <button class="menu-card" onclick="show('kpi')"><div class="menu-icon">📊</div><div class="menu-label">KPI Field</div><div class="menu-small">Current KPI achieved or not.</div></button>
+    <button class="menu-card" onclick="show('scanner')"><div class="menu-icon">📷</div><div class="menu-label">GS1 Scanner</div><div class="menu-small">Offline Excel-style scanner grid.</div></button>
+    <button class="menu-card" onclick="show('history')"><img class="menu-icon-img" src="data:image/png;base64,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"><div class="menu-label">Your Achievement</div><div class="menu-small">Calendar, rota, hours and target result.</div></button>
+    <button class="menu-card" onclick="show('weekly')"><div class="menu-icon">🗓️</div><div class="menu-label">Weekly Graph</div><div class="menu-small">Week performance and trend.</div></button>
+    <button class="menu-card" onclick="show('settings')"><div class="menu-icon">🔐</div><div class="menu-label">Admin Use</div><div class="menu-small">Target settings and admin unlock.</div></button>
+  </div>
+</section>
+
+<section class="screen" id="scanner">
+  <div class="scanner-page-wrap excel-open-page">
     <div class="scanner-header-card"><div class="scanner-title">VyScan Pharmacy Ledger</div><div class="signature-tag">MADE BY VYSAKH</div></div>
     <div class="scanner-dock">
       <div class="camera-viewport-box"><video id="preview" playsinline muted></video><div class="laser-line"></div></div>
@@ -581,7 +877,7 @@ table.excel-sheet td.row-index{background:#f8fafc;text-align:center;font-weight:
 
 <section class="screen" id="home">
   <div class="hero">
-    <div class="pill">⚕️ <span id="homeStore">MY DXB T3</span></div>
+    <div class="pill">⚕️ <span id="homeProfile">MY KPI</span></div>
     <div class="hero-title">PHARMACY<br>SALES</div>
     <div class="hero-sub">Daily Performance Dashboard</div>
   </div>
@@ -679,9 +975,9 @@ table.excel-sheet td.row-index{background:#f8fafc;text-align:center;font-weight:
 </section>
 
 <section class="screen" id="history">
-  <div class="section">History Calendar</div>
+  <div class="section">YOUR ACHIEVEMENT</div>
   <div class="cal-toolbar">
-    <div class="cal-title">3 Months Sales Calendar</div>
+    <div class="cal-title">YOUR ACHIEVEMENT</div>
     <div class="cal-sub">Business week runs Friday to Thursday. Tap a date, then select TLR / AL / D/O / OFF.</div>
     <div class="tag-row">
       <button class="tag-btn active" id="tag-none" onclick="setSelectedTag('')">Normal</button>
@@ -692,6 +988,12 @@ table.excel-sheet td.row-index{background:#f8fafc;text-align:center;font-weight:
     </div>
   </div>
   <div class="cal-note">Saved sales will appear inside each day box. OFF days show in red.</div>
+  <div class="achievement-title" id="yourAchievementHeader">YOUR ACHIEVEMENT</div>
+  <div class="achievement-note">You are the warrior — team achieved or not, your personal KPI achievement is tracked here.</div>
+  <div class="ach-status-row">
+    <div class="ach-status"><div class="a-l">Team Achieved</div><div class="a-v" id="teamAchievedText">—</div></div>
+    <div class="ach-status"><div class="a-l">You Achieved</div><div class="a-v" id="youAchievedText">—</div></div>
+  </div>
   <div class="hist-hero"><div class="hist-hero-title">📊 Embedded Sales History Summary</div><div class="hist-hero-grid" id="historySummaryNums"></div></div>
   <div class="graph-card"><div class="graph-title">📈 Current Business Week Graph</div><div id="weekGraphBars"></div></div>
   <div id="historyCalendar"></div>
@@ -700,17 +1002,17 @@ table.excel-sheet td.row-index{background:#f8fafc;text-align:center;font-weight:
 <section class="screen" id="settings">
   <div class="section">Settings</div><div class="admin-lock">🔐 Admin password: <b>331356</b>. Unlock to edit target settings.</div>
   <div class="settings"><div class="set-row"><div><b>Admin Unlock</b><div class="list-sub">Target edit password</div></div><input id="adminPass" type="password" placeholder="331356" oninput="unlockAdmin(this.value)"></div>
-    <div class="set-row"><div><b>Store Name</b><div class="list-sub">Shown on app</div></div><input id="setStore" oninput="setCfg('store',this.value)"></div>
+    <div class="set-row"><div><b>Profile Name</b><div class="list-sub">Shown on app</div></div><input id="setProfile" oninput="setCfg('profile',this.value)"></div>
     <div class="set-row"><div><b>Daily Target</b><div class="list-sub">AED target</div></div><input id="setTarget" type="number" oninput="setCfg('target',this.value)"></div>
     <div class="set-row"><div><b>No7 Target %</b><div class="list-sub">Share target</div></div><input id="setNo7Target" type="number" oninput="setCfg('no7Target',this.value)"></div>
     <div class="set-row"><div><b>Aura Target %</b><div class="list-sub">Enrolled / TRN</div></div><input id="setAuraTarget" type="number" oninput="setCfg('auraTarget',this.value)"></div>
   </div>
   <div class="ocr-card">
     <div class="ocr-head">
-      <div class="ocr-title">📷 Roster Image Capture</div>
+      <div class="ocr-title">📷 Captured Rota Data</div>
       <button class="ocr-btn" onclick="document.getElementById('rosterImage').click()">Camera / Upload</button>
     </div>
-    <div class="ocr-text">Upload Excel roster image. Image is stored as reference. OCR will try browser text extraction if available; otherwise keep it as a visual reference and update roster manually.</div>
+    <div class="ocr-text" id="capturedRotaText">Captured data will appear here after upload.</div>
     <input type="file" id="rosterImage" accept="image/*" capture="environment" style="display:none" onchange="handleRosterImage(event)">
     <div class="ocr-preview" id="ocrPreview"></div>
     <div class="ocr-result" id="ocrResult"></div>
@@ -726,7 +1028,8 @@ table.excel-sheet td.row-index{background:#f8fafc;text-align:center;font-weight:
 </section>
 
 <nav class="bottom-nav">
-  <button class="nav active" id="nav-scanner" onclick="show('scanner')"><i>📷</i>Scan</button>
+  <button class="nav active" id="nav-menu" onclick="show('menu')"><i>☰</i>Menu</button>
+  <button class="nav" id="nav-scanner" onclick="show('scanner')"><i>📷</i>Scan</button>
   <button class="nav" id="nav-home" onclick="show('home')"><i>🏠</i>Home</button>
   <button class="nav" id="nav-sales" onclick="show('sales')"><i>💊</i>Sales</button>
   <button class="nav" id="nav-weekly" onclick="show('weekly')"><i>🗓️</i>Weekly</button>
@@ -742,7 +1045,7 @@ const fields=[
  ['totalAED','💰 Total Sales','AED'],['trn','🧾 Transactions','TRN'],['no7AED','🧴 No7 Sales','AED'],['no7Focus','🎯 No7 Focus','pcs'],
  ['units','📦 Units Sold','items'],['footfall','👣 Footfall','ppl'],['dssr','🏦 DSSR Cash','AED'],['aura','✨ Aura Full Enrolled','links']
 ];
-let cfg={store:'MY DXB T3',target:20000,no7Target:12,auraTarget:65,nightTarget:5000,nightNo7:500,dayTarget:25000,dayNo7:2500,ipcTarget:2.3,hoursTarget:8,adminPassword:'331356'};
+let cfg={profile:'MY KPI',target:20000,no7Target:12,auraTarget:65,nightTarget:5000,nightNo7:500,dayTarget:25000,dayNo7:2500,ipcTarget:2.3,hoursTarget:8,adminPassword:'331356'};
 let data={};let current={};
 
 const VAT_RATE=0.05;
@@ -1090,7 +1393,7 @@ function load(){try{const s=JSON.parse(localStorage.getItem(STORE)||'{}');cfg={.
 function persist(){localStorage.setItem(STORE,JSON.stringify({cfg,data}))}
 function toast(t){let el=document.getElementById('toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1400)}
 function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');let nav=document.getElementById('nav-'+id);if(nav)nav.classList.add('active');renderAll();scrollTo(0,0)}
-function renderHeader(){const d=new Date();document.getElementById('dateText').textContent=d.toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'short'});document.getElementById('storeBadge').textContent=cfg.store;document.getElementById('homeStore').textContent=cfg.store}
+function renderHeader(){const d=new Date();document.getElementById('dateText').textContent=d.toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'short'});document.getElementById('profileBadge').textContent=cfg.profile;document.getElementById('homeProfile').textContent=cfg.profile}
 function kpis(src=current){const total=n(src.totalAED),trn=n(src.trn),no7=n(src.no7AED),units=n(src.units),foot=n(src.footfall),aura=n(src.aura);return{
  atv:trn?total/trn:0,ipc:trn?units/trn:0,conv:foot?trn/foot*100:0,no7p:total?no7/total*100:0,auraP:trn?aura/trn*100:0,total,trn,no7,units,foot,aura
 }}
@@ -1197,13 +1500,13 @@ function renderHistory(){
    out+=`<div class="week-block"><div class="week-head"><div class="week-head-title">Business Week ${wk} · ${cursor.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}–${end.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}</div><div class="week-head-total">${fmt(weekTotal)} · ${weekHours}h</div></div><div class="cal-grid">${dayNames.map(x=>`<div class="cal-day-head">${x}</div>`).join('')}${cells}</div></div>`;
    cursor=addDays(cursor,7);
  }
- c.innerHTML=out;
+ c.innerHTML=out; renderRotaAchievementCalendar();
 }
-function renderSettings(){document.getElementById('setStore').value=cfg.store;document.getElementById('setTarget').value=cfg.target;document.getElementById('setNo7Target').value=cfg.no7Target;document.getElementById('setAuraTarget').value=cfg.auraTarget}
-function setCfg(k,v){cfg[k]=k==='store'?v:n(v);persist();renderAll()}
+function renderSettings(){document.getElementById('setProfile').value=cfg.profile;document.getElementById('setTarget').value=cfg.target;document.getElementById('setNo7Target').value=cfg.no7Target;document.getElementById('setAuraTarget').value=cfg.auraTarget}
+function setCfg(k,v){cfg[k]=k==='profile'?v:n(v);persist();renderAll()}
 function exportData(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({cfg,data},null,2)],{type:'application/json'}));a.download='my-tracker-backup-'+today()+'.json';a.click();toast('Backup exported')}
 function resetAll(){if(confirm('Delete all app data?')){data={};current={};localStorage.removeItem(STORE+'_status');persist();renderAll();toast('Data cleared')}}
-function renderAll(){renderHeader();renderHome();renderQuick();renderWeekly();renderKpi();renderHistory();renderSettings();renderShiftPanel();loadRosterPreview();updateEditDateUI();loadSalesImagePreview();loadClockInfo()}
+function renderAll(){ updateMenuAchievement(); renderHeader();renderHome();renderQuick();renderWeekly();renderKpi();renderHistory();renderSettings();renderShiftPanel();loadRosterPreview();updateEditDateUI();loadSalesImagePreview();loadClockInfo()}
 load();mergeEmbeddedHistory();editDateKey=today();current={...(data[editDateKey]||{})};renderEntry();renderAll();
 
 let streamInstance=null;
@@ -1240,6 +1543,59 @@ function exportScannerRows(){
 }
 
 loadScannerRows();
+
+function updateMenuAchievement(){
+  const k=kpis(current||{});
+  const t=targetForDate ? targetForDate(editDateKey||today()) : {sales:25000,no7:2500,aura:65,ipc:2.3};
+  const teamOk=k.total>=t.sales;
+  const youOk=(k.total>=t.sales && k.no7>=t.no7 && (k.auraP||0)>=t.aura && (k.ipc||0)>=t.ipc);
+  const mt=document.getElementById('menuAchievementText');
+  if(mt)mt.textContent=`Team ${teamOk?'achieved ✅':'not achieved 🥵'} · You ${youOk?'achieved ✅':'keep fighting warrior 🛡️'}`;
+  const ta=document.getElementById('teamAchievedText');
+  const ya=document.getElementById('youAchievedText');
+  if(ta)ta.textContent=teamOk?'Achieved ✅':'Not yet 🥵';
+  if(ya)ya.textContent=youOk?'Achieved ✅':'You are the warrior 🛡️';
+}
+function rotaHoursFromText(s){
+  s=String(s||'').toUpperCase();
+  if(!s||s.includes('OFF')||s==='AL'||s==='DO'||s==='SL')return 0;
+  if(s.includes('10-6')||s.includes('10 PM'))return 8;
+  if(s.includes('9-7'))return 10;
+  if(s.includes('1-10'))return 9;
+  if(s.includes('6-3'))return 9;
+  if(s.includes('2-10'))return 8;
+  return 8;
+}
+function renderRotaAchievementCalendar(){
+  const container=document.getElementById('historyCalendar');
+  if(!container)return false;
+  try{
+    const start=new Date('2026-05-15T12:00:00');
+    const my=rosterWeek21.people.find(p=>p.name.toUpperCase().includes('VYSAKH'));
+    const days=['Fri','Sat','Sun','Mon','Tue','Wed','Thu'];
+    let total=0,cells='';
+    for(let i=0;i<7;i++){
+      const d=new Date(start);d.setDate(start.getDate()+i);
+      const key=d.toISOString().slice(0,10);
+      const shift=my?my.shifts[i]:'—';
+      const h=rotaHoursFromText(shift); total+=h;
+      const off=h===0;
+      const isToday=key===today();
+      cells+=`<div class="rota-date-box ${off?'off':''} ${isToday?'today':''}" onclick="openDayDetail && openDayDetail('${key}')">
+        <div class="rota-date">${d.getDate()}</div>
+        <div class="rota-day">${days[i]}</div>
+        <div class="rota-time">${shift}</div>
+        <div class="rota-hours">${h} hr ${h>=8?'✅':off?'OFF':'🔴'}</div>
+      </div>`;
+    }
+    container.innerHTML=`<div class="rota-week-block">
+      <div class="rota-week-head"><div class="rota-week-title">Week 21 · Rota Calendar</div><div class="rota-week-hours">${total} hrs</div></div>
+      <div class="rota-cal-grid">${cells}</div>
+    </div>` + container.innerHTML;
+    return true;
+  }catch(e){return false}
+}
+
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 </script>
 </body>
